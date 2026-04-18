@@ -52,11 +52,15 @@ VALID_TRANSITIONS: dict[ContentStatus, set[ContentStatus]] = {
 }
 
 
-def transition(current: ContentStatus, new: ContentStatus) -> ContentStatus:
+def transition(current: "ContentStatus | str", new: "ContentStatus | str") -> ContentStatus:
     """Validate and apply a state transition.
 
+    Accepts ContentStatus enum members or raw status strings.
     Raises InvalidTransitionError if the transition is not permitted.
+    Raises ValueError if either status string is not a known ContentStatus value.
     """
+    current = ContentStatus(current)
+    new = ContentStatus(new)
     allowed = VALID_TRANSITIONS.get(current, set())
     if new not in allowed:
         raise InvalidTransitionError(current, new)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -28,7 +28,7 @@ class CreateContentItem(BaseModel):
     pillar: str | None = None
     audience: str | None = None
     status: ContentStatus = ContentStatus.IDEA
-    priority: int = 0
+    priority: int = Field(default=0, ge=0)
     source: str | None = None
 
 
@@ -63,8 +63,8 @@ class ScriptVariant(BaseModel):
     content_item_id: str
     variant_name: str
     script_text: str
-    duration_target_seconds: int = 60
-    status: str = "draft"
+    duration_target_seconds: int = Field(default=60, ge=1)
+    status: Literal["draft", "approved"] = "draft"
     created_at: datetime = Field(default_factory=_now)
 
 
@@ -91,7 +91,7 @@ class ApprovalRecord(BaseModel):
     id: str = Field(default_factory=_new_id)
     content_item_id: str
     approved_by: str
-    decision: str  # "approved" | "rejected" | "revision_requested"
+    decision: Literal["approved", "rejected", "revision_requested"]
     notes: str | None = None
     timestamp: datetime = Field(default_factory=_now)
 
@@ -103,7 +103,7 @@ class ApprovalRecord(BaseModel):
 class PublishJob(BaseModel):
     id: str = Field(default_factory=_new_id)
     content_item_id: str
-    platform: str  # "youtube" | "tiktok" | "instagram"
+    platform: Literal["youtube", "tiktok", "instagram"]
     engine: str = "moneyprinterv2"
     status: str = "pending"
     published_url: str | None = None
@@ -121,6 +121,6 @@ class AgentRun(BaseModel):
     started_at: datetime = Field(default_factory=_now)
     ended_at: datetime | None = None
     goal: str
-    status: str = "running"  # "running" | "completed" | "failed"
+    status: Literal["running", "completed", "failed"] = "running"
     summary: str | None = None
     error_class: str | None = None

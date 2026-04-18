@@ -14,7 +14,7 @@ pipeline:
     logs_dir: data/logs/
   render:
     engine: moneyprinterturbo
-    use_nvenc: true       # GTX 1050 Ti NVENC available — faster than x264
+    use_nvenc: false      # enable only when profusion check-env reports NVENC available
   publish:
     engine: moneyprinterv2
     default_platform: youtube

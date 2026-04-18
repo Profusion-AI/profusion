@@ -26,7 +26,7 @@
 
 | Milestone | Focus | Status |
 |-----------|-------|--------|
-| M0 | Foundation: repo, state machine, DB, CLI skeleton | In Progress |
+| M0 | Foundation: repo, state machine, DB, CLI skeleton | Complete |
 | M1 | Editorial pipeline: topic intake, briefs, scripts | Not started |
 | M2 | Rendering: MoneyPrinterTurbo integration | Not started |
 | M3 | QA + approval gates | Not started |

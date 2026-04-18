@@ -50,10 +50,6 @@ def status() -> None:
     table.add_column("Pillar")
     table.add_column("Priority", justify="right")
 
-    if not items:
-        console.print("[dim]Queue is empty. Use [bold]profusion ingest[/bold] to add topics.[/dim]")
-        return
-
     status_colors = {
         "idea": "white",
         "planned": "blue",
@@ -81,6 +77,8 @@ def status() -> None:
         )
 
     console.print(table)
+    if not items:
+        console.print("[dim]Queue is empty. Use [bold]profusion ingest[/bold] to add topics.[/dim]")
 
 
 @app.command("check-env")

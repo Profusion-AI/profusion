@@ -48,6 +48,14 @@
 - `pyproject.toml` declares `[tool.hatch.build.targets.wheel] packages = ["src/orchestrator"]`.
 - Simpler than a monorepo `apps/` structure for a single-package project at this stage.
 
+### sqlite3 vs sqlite-utils
+**Decision:** `db.py` uses raw `sqlite3` for schema management and queries. `sqlite-utils` is retained as a dependency for CRUD helpers in M1+.
+
+**Rationale:**
+- `sqlite3` is sufficient for the M0 schema init (DDL, PRAGMA, indexes) and gives direct control over connection lifecycle and row_factory.
+- `sqlite-utils` provides a more ergonomic API for INSERT/SELECT/UPDATE operations that will be needed in M1 when items flow through the pipeline.
+- Splitting the concern (sqlite3 for schema, sqlite-utils for CRUD) avoids a larger M0 refactor while keeping the dependency justified.
+
 ### TTS engine
 **Decision:** Edge-TTS as default voice synthesis engine (not OpenAI TTS, not local models).
 
