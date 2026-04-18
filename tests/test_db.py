@@ -18,6 +18,7 @@ EXPECTED_TABLES = {
     "approval_records",
     "publish_jobs",
     "agent_runs",
+    "source_documents",
 }
 
 

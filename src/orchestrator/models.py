@@ -39,7 +39,66 @@ class ContentItem(CreateContentItem):
 
 
 # ---------------------------------------------------------------------------
-# Content Brief
+# Source Document (M1)
+# ---------------------------------------------------------------------------
+
+class SourceDocument(BaseModel):
+    id: str = Field(default_factory=_new_id)
+    content_item_id: str
+    url: str | None = None
+    title: str | None = None
+    markdown: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=_now)
+
+
+# ---------------------------------------------------------------------------
+# Brief primitives (M1) — structured Claude output
+# ---------------------------------------------------------------------------
+
+RiskCategory = Literal[
+    "reputational",
+    "legal",
+    "factual",
+    "editorial_tone",
+    "audience_sensitivity",
+    "partisan_framing",
+]
+
+
+class ClaimToVerify(BaseModel):
+    claim: str
+    why_it_matters: str | None = None
+    suggested_source_type: str | None = None
+
+
+class RiskFlag(BaseModel):
+    category: RiskCategory
+    description: str
+    mitigation: str | None = None
+
+
+class SourceRef(BaseModel):
+    title: str | None = None
+    url: str | None = None
+    note: str | None = None
+
+
+class BriefDraft(BaseModel):
+    """Validated structured output from the brief-generation prompt."""
+
+    thesis: str
+    angle: str | None = None
+    hook_options: list[str] = Field(default_factory=list)
+    cta: str | None = None
+    claims_to_verify: list[ClaimToVerify] = Field(default_factory=list)
+    risk_flags: list[RiskFlag] = Field(default_factory=list)
+    brand_notes: str | None = None
+    source_refs: list[SourceRef] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Content Brief (persisted)
 # ---------------------------------------------------------------------------
 
 class ContentBrief(BaseModel):
@@ -49,14 +108,30 @@ class ContentBrief(BaseModel):
     angle: str | None = None
     hook_options: list[str] = Field(default_factory=list)
     cta: str | None = None
-    claims_to_verify: list[str] = Field(default_factory=list)
+    claims_to_verify: list[ClaimToVerify] = Field(default_factory=list)
     brand_notes: str | None = None
+    risk_flags: list[RiskFlag] = Field(default_factory=list)
+    source_refs: list[SourceRef] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=_now)
 
 
 # ---------------------------------------------------------------------------
 # Script Variant
 # ---------------------------------------------------------------------------
+
+class ScriptDraft(BaseModel):
+    """Validated structured output for a single script variant from Claude."""
+
+    variant_name: str
+    script_text: str
+    duration_target_seconds: int = Field(default=60, ge=10, le=180)
+
+
+class ScriptBatch(BaseModel):
+    """A batch of script variants returned from one prompt call."""
+
+    variants: list[ScriptDraft]
+
 
 class ScriptVariant(BaseModel):
     id: str = Field(default_factory=_new_id)

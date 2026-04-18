@@ -65,3 +65,38 @@
 - Quality is solid for educational short-form content.
 - Avoids additional API cost on top of Claude.
 - Can be swapped to OpenAI TTS or a local model later via config.
+
+## M1 — Editorial Pipeline
+
+### Structured Claude output, validated before persistence
+**Decision:** All brief- and script-generation calls prompt Claude for a single JSON object, which is parsed and validated by Pydantic (`BriefDraft`, `ScriptBatch`) before anything is written to the DB. Failures abort the transition.
+
+**Rationale:**
+- Freeform prose would force the orchestrator to scrape structured fields out of vague output and hope for the best.
+- Structured output lets us enforce the editorial contract (required thesis, enumerated risk categories, variant completeness) at the seam, not at read-time.
+- Validation failures cleanly short-circuit state transitions, so a bad model response never leaves the DB in a half-advanced state.
+- The brief-generation prompt lives in `src/orchestrator/prompts/planning/brief.md` so the contract is versioned with the code.
+
+### Editorial metadata lives in the brief schema, not in prose
+**Decision:** Extended `content_briefs` with `risk_flags` and `source_refs` JSON columns. Added a dedicated `source_documents` table for raw source material.
+
+**Rationale:**
+- Risks and verifiable claims are first-class editorial artifacts — burying them in `brand_notes` or `thesis` makes them unusable for later QA and approval gates.
+- `source_documents` separates raw scraped/pasted material from the editorial synthesis that cites it. Firecrawl can populate the table later without schema churn.
+- Schema bumped to v2 with an idempotent `ALTER TABLE ... ADD COLUMN` migration that is safe to run against existing v1 databases.
+
+### Editorial logic lives outside the Claude adapter
+**Decision:** Brief/script generation lives in `src/orchestrator/editorial.py`. The `claude.py` adapter stays transport-only.
+
+**Rationale:**
+- The adapter's only job is turning system+user text into a string and surfacing API errors. Prompt loading, JSON extraction, schema validation, and pipeline-specific invariants (e.g. "all requested variants must be returned") belong one layer up.
+- This keeps the adapter trivially mockable — tests monkeypatch `claude.generate` without touching editorial logic.
+- If the LLM provider changes, only the adapter is affected.
+
+### Default script variants and target duration
+**Decision:** `profusion script` generates three default variants per planned item — `straight_explainer`, `provocative_hook`, `myth_vs_reality` — at a 60-second target.
+
+**Rationale:**
+- Three variants give enough spread to pick a lane without producing noise.
+- Short-form educational media on the target platforms lives at 30–90s; 60s is the safe middle.
+- Variant names are declarative (specified in the prompt input) so we can validate that Claude returned every requested variant, not just some subset.

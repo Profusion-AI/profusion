@@ -25,6 +25,41 @@ uv run profusion check-env
 uv run profusion status
 ```
 
+## Editorial Workflow (M1)
+
+```bash
+# Ingest a single topic
+uv run profusion ingest --topic "Why American schools optimize for compliance" \
+    --pillar education_reform --audience educators --priority 5
+
+# Ingest from CSV (columns: topic,pillar,audience,priority,source)
+uv run profusion ingest --file data/topics/example.csv
+
+# Inspect the queue (supports --status filter)
+uv run profusion status
+uv run profusion status --status idea
+uv run profusion status --status planned
+
+# Generate a brief (idea → planned). Requires ANTHROPIC_API_KEY.
+uv run profusion plan --item-id <id-or-prefix>
+
+# Generate script variants (planned → scripted).
+uv run profusion script --item-id <id-or-prefix>
+uv run profusion script --item-id <id-or-prefix> --duration 45
+```
+
+`<id-or-prefix>` can be the full UUID or any unique prefix shown in `status`.
+
+Claude output is parsed as strict JSON and validated with Pydantic before it
+lands in the DB. If Claude returns malformed JSON, an invalid risk category,
+or drops a requested variant, the transition is aborted and the item stays
+in its prior state.
+
+Brief metadata (`risk_flags`, `claims_to_verify`, `source_refs`) is stored on
+`content_briefs` as JSON. Raw source material attaches to a content item via
+the `source_documents` table; populate it manually until Firecrawl ingest is
+wired up.
+
 ## Secret Configuration
 
 Required secrets in `.env`:
