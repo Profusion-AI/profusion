@@ -1,0 +1,28 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+.python-version
+
+# Secrets — never commit
+.env
+.env.local
+.env.*
+!.env.example
+
+# Data artifacts
+data/*.db
+data/renders/*
+!data/renders/.gitkeep
+data/logs/*
+!data/logs/.gitkeep
+
+# uv
+uv.lock
+
+# OS
+.DS_Store
+Thumbs.db

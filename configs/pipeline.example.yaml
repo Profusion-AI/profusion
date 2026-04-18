@@ -1,0 +1,21 @@
+pipeline:
+  env: development
+  dry_run: true           # never set false until Milestone 4 publishing is ready
+  claude_model: claude-sonnet-4-6
+  content:
+    default_duration_seconds: 60
+    default_aspect_ratio: "9:16"
+  tts:
+    engine: edge-tts      # free Microsoft TTS, no API key required
+    voice: en-US-GuyNeural
+  storage:
+    db_path: data/content.db
+    renders_dir: data/renders/
+    logs_dir: data/logs/
+  render:
+    engine: moneyprinterturbo
+    use_nvenc: true       # GTX 1050 Ti NVENC available — faster than x264
+  publish:
+    engine: moneyprinterv2
+    default_platform: youtube
+    default_privacy: private  # always private until operator approves
