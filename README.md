@@ -15,7 +15,8 @@ uv run profusion status
 
 ## Current milestone
 
-See `STATUS.md` for milestone progress and `docs/runbooks.md` for troubleshooting.
+See `STATUS.md` for milestone progress and `docs/runbooks/` for operations,
+handoff, recovery, and release checklists.
 
 ## Architecture
 

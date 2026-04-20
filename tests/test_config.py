@@ -55,10 +55,6 @@ def test_stub_adapters_import_cleanly():
 
 
 def test_stub_adapters_raise_not_implemented():
-    from orchestrator.adapters import firecrawl, turbo, v2
-    with pytest.raises(NotImplementedError):
-        turbo.render("script text")
-    with pytest.raises(NotImplementedError):
-        v2.publish("/path/to/video.mp4", v2.PublishMetadata(title="t", description="d"))
+    from orchestrator.adapters import firecrawl
     with pytest.raises(NotImplementedError):
         firecrawl.scrape("https://example.com")

@@ -15,6 +15,9 @@
 │  ├── state.py        — content state machine + guards        │
 │  ├── db.py           — SQLite persistence (content.db)       │
 │  ├── models.py       — Pydantic typed entities               │
+│  ├── read_models.py  — inspection/JSON dashboard contracts   │
+│  ├── retry.py        — conservative retry orchestration      │
+│  ├── diagnostics.py  — redacted failure logs + metadata      │
 │  ├── config.py       — .env loader                          │
 │  └── adapters/                                               │
 │      ├── claude.py   — Anthropic SDK (LLM, all gen work)    │
@@ -79,7 +82,11 @@
    → v2.publish(video, metadata)
    → status: published, URL stored
 
-8. (future M6) measure
+8. M6 operator hardening
+   → inspect / jobs / renders / approvals / handoff / retry
+   → stable JSON contracts for the future localhost dashboard
+
+9. (future M8) measure
    → performance captured
    → status: measured → archived
 ```
@@ -100,3 +107,4 @@ See DECISIONS.md for full rationale on:
 - LLM routing through Claude (not Turbo's internal LLM)
 - State machine canonical source (PRD §13)
 - Edge-TTS as default TTS engine
+- M6 read-model contracts and retry lineage

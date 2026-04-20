@@ -43,7 +43,7 @@ VALID_TRANSITIONS: dict[ContentStatus, set[ContentStatus]] = {
     ContentStatus.RENDERED: {ContentStatus.QA_PASSED, ContentStatus.QA_FAILED, ContentStatus.ARCHIVED},
     ContentStatus.QA_FAILED: {ContentStatus.RENDERED, ContentStatus.ARCHIVED},  # retry path
     ContentStatus.QA_PASSED: {ContentStatus.AWAITING_APPROVAL, ContentStatus.ARCHIVED},
-    ContentStatus.AWAITING_APPROVAL: {ContentStatus.APPROVED, ContentStatus.ARCHIVED},
+    ContentStatus.AWAITING_APPROVAL: {ContentStatus.APPROVED, ContentStatus.SCRIPTED, ContentStatus.ARCHIVED},
     ContentStatus.APPROVED: {ContentStatus.SCHEDULED, ContentStatus.ARCHIVED},
     ContentStatus.SCHEDULED: {ContentStatus.PUBLISHED, ContentStatus.ARCHIVED},
     ContentStatus.PUBLISHED: {ContentStatus.MEASURED, ContentStatus.ARCHIVED},

@@ -133,6 +133,14 @@ class ScriptBatch(BaseModel):
     variants: list[ScriptDraft]
 
 
+class QAResult(BaseModel):
+    """Validated structured output from the editorial risk QA prompt."""
+
+    risk_flags: list[RiskFlag] = Field(default_factory=list)
+    claims_to_verify: list[ClaimToVerify] = Field(default_factory=list)
+    overall_go_no_go: Literal["go", "hold"]
+
+
 class ScriptVariant(BaseModel):
     id: str = Field(default_factory=_new_id)
     content_item_id: str
@@ -155,6 +163,9 @@ class RenderJob(BaseModel):
     output_path: str | None = None
     status: str = "pending"
     log_path: str | None = None
+    retry_of_job_id: str | None = None
+    attempt_group_id: str | None = None
+    error_code: str | None = None
     created_at: datetime = Field(default_factory=_now)
 
 
@@ -178,13 +189,25 @@ class ApprovalRecord(BaseModel):
 class PublishJob(BaseModel):
     id: str = Field(default_factory=_new_id)
     content_item_id: str
-    platform: Literal["youtube", "tiktok", "instagram"]
+    platform: str
     engine: str = "moneyprinterv2"
     status: str = "pending"
+    account_id: int | None = None
+    title: str | None = None
+    description: str | None = None
+    scheduled_for: datetime | None = None
+    platform_metadata: dict[str, Any] = Field(default_factory=dict)
     published_url: str | None = None
     external_post_id: str | None = None
     published_at: datetime | None = None
+    last_error: str | None = None
+    retry_of_job_id: str | None = None
+    attempt_group_id: str | None = None
+    error_code: str | None = None
+    log_path: str | None = None
+    attempt_count: int = 0
     created_at: datetime = Field(default_factory=_now)
+    updated_at: datetime | None = None
 
 
 # ---------------------------------------------------------------------------

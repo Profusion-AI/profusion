@@ -12,7 +12,9 @@ import uuid
 from pathlib import Path
 from typing import Any, Iterable
 
-SCHEMA_VERSION = 2
+from orchestrator.state import ContentStatus, InvalidTransitionError, transition
+
+SCHEMA_VERSION = 4
 
 
 def _connect(db_path: str | Path) -> sqlite3.Connection:
@@ -46,6 +48,20 @@ def init_db(db_path: str | Path = "data/content.db") -> None:
                 (2,),
             )
             current_version = 2
+        if current_version == 2:
+            _migrate_v2_to_v3(conn)
+            conn.execute(
+                "INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)",
+                (3,),
+            )
+            current_version = 3
+        if current_version == 3:
+            _migrate_v3_to_v4(conn)
+            conn.execute(
+                "INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)",
+                (4,),
+            )
+            current_version = 4
         conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
         conn.commit()
     finally:
@@ -174,6 +190,85 @@ def _migrate_v1_to_v2(conn: sqlite3.Connection) -> None:
         );
 
         CREATE INDEX IF NOT EXISTS idx_source_documents_item ON source_documents(content_item_id);
+    """)
+
+
+def _migrate_v2_to_v3(conn: sqlite3.Connection) -> None:
+    """v3: add scheduling/cross-post metadata to publish_jobs."""
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS publish_jobs (
+            id                  TEXT PRIMARY KEY,
+            content_item_id     TEXT NOT NULL REFERENCES content_items(id) ON DELETE CASCADE,
+            platform            TEXT NOT NULL,
+            engine              TEXT NOT NULL DEFAULT 'moneyprinterv2',
+            status              TEXT NOT NULL DEFAULT 'pending',
+            published_url       TEXT,
+            external_post_id    TEXT,
+            published_at        TEXT,
+            created_at          TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+    """)
+
+
+def _migrate_v3_to_v4(conn: sqlite3.Connection) -> None:
+    """v4: add M6 retry lineage and diagnostic metadata."""
+    # Some early test/legacy v1 databases contain only the tables used by M1.
+    # Re-running the base CREATE TABLE IF NOT EXISTS block fills missing M0 tables
+    # before additive v4 ALTERs run.
+    _create_schema_v1(conn)
+    table_additions = {
+        "publish_jobs": [
+            ("retry_of_job_id", "TEXT"),
+            ("attempt_group_id", "TEXT"),
+            ("error_code", "TEXT"),
+            ("log_path", "TEXT"),
+        ],
+        "render_jobs": [
+            ("retry_of_job_id", "TEXT"),
+            ("attempt_group_id", "TEXT"),
+            ("error_code", "TEXT"),
+        ],
+    }
+    for table, additions in table_additions.items():
+        existing_cols = {
+            row["name"] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()
+        }
+        for name, ddl in additions:
+            if name not in existing_cols:
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}")
+
+    conn.executescript("""
+        CREATE INDEX IF NOT EXISTS idx_publish_jobs_retry_of
+            ON publish_jobs(retry_of_job_id);
+        CREATE INDEX IF NOT EXISTS idx_publish_jobs_attempt_group
+            ON publish_jobs(attempt_group_id);
+        CREATE INDEX IF NOT EXISTS idx_render_jobs_retry_of
+            ON render_jobs(retry_of_job_id);
+        CREATE INDEX IF NOT EXISTS idx_render_jobs_attempt_group
+            ON render_jobs(attempt_group_id);
+    """)
+    existing_cols = {
+        row["name"] for row in conn.execute("PRAGMA table_info(publish_jobs)").fetchall()
+    }
+    additions = [
+        ("account_id", "INTEGER"),
+        ("title", "TEXT"),
+        ("description", "TEXT"),
+        ("scheduled_for", "TEXT"),
+        ("platform_metadata", "TEXT NOT NULL DEFAULT '{}'"),
+        ("last_error", "TEXT"),
+        ("attempt_count", "INTEGER NOT NULL DEFAULT 0"),
+        ("updated_at", "TEXT"),
+    ]
+    for name, ddl in additions:
+        if name not in existing_cols:
+            conn.execute(f"ALTER TABLE publish_jobs ADD COLUMN {name} {ddl}")
+
+    conn.executescript("""
+        CREATE INDEX IF NOT EXISTS idx_publish_jobs_status_due
+            ON publish_jobs(status, scheduled_for);
+        CREATE INDEX IF NOT EXISTS idx_publish_jobs_item
+            ON publish_jobs(content_item_id);
     """)
 
 
@@ -436,5 +531,618 @@ def get_source_documents(db_path: str | Path, content_item_id: str) -> list[dict
             (content_item_id,),
         ).fetchall()
         return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Render jobs
+# ---------------------------------------------------------------------------
+
+def insert_render_job(
+    db_path: str | Path,
+    *,
+    task_id: str,
+    script_variant_id: str,
+    render_profile: dict,
+    retry_of_job_id: str | None = None,
+    attempt_group_id: str | None = None,
+) -> str:
+    """Insert a render job using Turbo's task_id as primary key. Returns task_id."""
+    attempt_group_id = attempt_group_id or retry_of_job_id or task_id
+    conn = _connect(db_path)
+    try:
+        conn.execute(
+            "INSERT INTO render_jobs "
+            "(id, script_variant_id, render_profile, retry_of_job_id, attempt_group_id) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (
+                task_id,
+                script_variant_id,
+                json.dumps(render_profile),
+                retry_of_job_id,
+                attempt_group_id,
+            ),
+        )
+        conn.commit()
+        return task_id
+    finally:
+        conn.close()
+
+
+def get_render_job(db_path: str | Path, job_id: str) -> dict | None:
+    conn = _connect(db_path)
+    try:
+        row = conn.execute(
+            "SELECT * FROM render_jobs WHERE id = ?", (job_id,)
+        ).fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def get_render_job_with_item(db_path: str | Path, job_id: str) -> dict | None:
+    conn = _connect(db_path)
+    try:
+        row = conn.execute(
+            "SELECT rj.*, sv.content_item_id, sv.variant_name, sv.script_text, "
+            "       ci.topic, ci.status AS item_status "
+            "FROM render_jobs rj "
+            "JOIN script_variants sv ON sv.id = rj.script_variant_id "
+            "JOIN content_items ci ON ci.id = sv.content_item_id "
+            "WHERE rj.id = ?",
+            (job_id,),
+        ).fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def get_render_jobs_for_item(db_path: str | Path, content_item_id: str) -> list[dict]:
+    conn = _connect(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT rj.*, sv.content_item_id, sv.variant_name "
+            "FROM render_jobs rj "
+            "JOIN script_variants sv ON sv.id = rj.script_variant_id "
+            "WHERE sv.content_item_id = ? "
+            "ORDER BY rj.created_at DESC",
+            (content_item_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def get_render_jobs_by_variant(
+    db_path: str | Path, script_variant_id: str
+) -> list[dict]:
+    conn = _connect(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT * FROM render_jobs WHERE script_variant_id = ? "
+            "ORDER BY created_at DESC",
+            (script_variant_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def update_render_job(
+    db_path: str | Path,
+    job_id: str,
+    *,
+    status: str,
+    output_path: str | None = None,
+    log_path: str | None = None,
+    error_code: str | None = None,
+) -> None:
+    conn = _connect(db_path)
+    try:
+        conn.execute(
+            "UPDATE render_jobs "
+            "SET status = ?, "
+            "    output_path = COALESCE(?, output_path), "
+            "    log_path = COALESCE(?, log_path), "
+            "    error_code = COALESCE(?, error_code) "
+            "WHERE id = ?",
+            (status, output_path, log_path, error_code, job_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_completed_render_job_for_item(
+    db_path: str | Path, content_item_id: str
+) -> dict | None:
+    """Return the most recent completed render job for a content item."""
+    conn = _connect(db_path)
+    try:
+        row = conn.execute(
+            "SELECT rj.* FROM render_jobs rj "
+            "JOIN script_variants sv ON sv.id = rj.script_variant_id "
+            "WHERE sv.content_item_id = ? AND rj.status = 'completed' "
+            "ORDER BY rj.created_at DESC LIMIT 1",
+            (content_item_id,),
+        ).fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def get_approval_records(
+    db_path: str | Path, content_item_id: str
+) -> list[dict]:
+    conn = _connect(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT * FROM approval_records WHERE content_item_id = ? "
+            "ORDER BY timestamp DESC",
+            (content_item_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def record_approval_decision(
+    db_path: str | Path,
+    *,
+    content_item_id: str,
+    decision: str,
+    approved_by: str,
+    notes: str | None = None,
+    record_id: str | None = None,
+) -> str:
+    """Atomically insert approval record and walk item status to its final state.
+
+    Decision → final status:
+        approved             → approved
+        rejected             → archived
+        revision_requested   → scripted
+
+    Raises ValueError if current item status is not qa_passed.
+    Raises ValueError if decision is not a recognised value.
+    """
+    _DECISION_TO_FINAL: dict[str, str] = {
+        "approved": "approved",
+        "rejected": "archived",
+        "revision_requested": "scripted",
+    }
+    if decision not in _DECISION_TO_FINAL:
+        raise ValueError(f"Unknown decision: {decision!r}")
+    final_status = _DECISION_TO_FINAL[decision]
+    record_id = record_id or str(uuid.uuid4())
+    conn = _connect(db_path)
+    try:
+        conn.execute("BEGIN")
+        row = conn.execute(
+            "SELECT status FROM content_items WHERE id = ?",
+            (content_item_id,),
+        ).fetchone()
+        if row is None:
+            raise ValueError(f"Content item {content_item_id!r} not found")
+        transition(row["status"], ContentStatus.AWAITING_APPROVAL)
+        transition(ContentStatus.AWAITING_APPROVAL, ContentStatus(final_status))
+        conn.execute(
+            "INSERT INTO approval_records (id, content_item_id, approved_by, decision, notes) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (record_id, content_item_id, approved_by, decision, notes),
+        )
+        conn.execute(
+            "UPDATE content_items SET status = 'awaiting_approval', updated_at = datetime('now') "
+            "WHERE id = ?",
+            (content_item_id,),
+        )
+        conn.execute(
+            "UPDATE content_items SET status = ?, updated_at = datetime('now') WHERE id = ?",
+            (final_status, content_item_id),
+        )
+        conn.commit()
+        return record_id
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Publish jobs
+# ---------------------------------------------------------------------------
+
+def insert_publish_job(
+    db_path: str | Path,
+    *,
+    content_item_id: str,
+    platform: str,
+    account_id: int | None = None,
+    title: str | None = None,
+    description: str | None = None,
+    scheduled_for: str | None = None,
+    platform_metadata: dict[str, Any] | None = None,
+    status: str = "pending",
+    job_id: str | None = None,
+    retry_of_job_id: str | None = None,
+    attempt_group_id: str | None = None,
+) -> str:
+    """Insert a publish job. Returns the job id."""
+    job_id = job_id or str(uuid.uuid4())
+    attempt_group_id = attempt_group_id or retry_of_job_id or job_id
+    conn = _connect(db_path)
+    try:
+        conn.execute(
+            "INSERT INTO publish_jobs "
+            "(id, content_item_id, platform, status, account_id, title, description, "
+            " scheduled_for, platform_metadata, retry_of_job_id, attempt_group_id, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))",
+            (
+                job_id,
+                content_item_id,
+                platform,
+                status,
+                account_id,
+                title,
+                description,
+                scheduled_for,
+                json.dumps(platform_metadata or {}),
+                retry_of_job_id,
+                attempt_group_id,
+            ),
+        )
+        conn.commit()
+        return job_id
+    finally:
+        conn.close()
+
+
+def update_publish_job(
+    db_path: str | Path,
+    job_id: str,
+    *,
+    status: str,
+    published_url: str | None = None,
+    external_post_id: str | None = None,
+    published_at: str | None = None,
+    last_error: str | None = None,
+    error_code: str | None = None,
+    log_path: str | None = None,
+    increment_attempt: bool = False,
+) -> None:
+    conn = _connect(db_path)
+    try:
+        conn.execute(
+            "UPDATE publish_jobs "
+            "SET status = ?, "
+            "    published_url = COALESCE(?, published_url), "
+            "    external_post_id = COALESCE(?, external_post_id), "
+            "    published_at = COALESCE(?, published_at), "
+            "    last_error = COALESCE(?, last_error), "
+            "    error_code = COALESCE(?, error_code), "
+            "    log_path = COALESCE(?, log_path), "
+            "    attempt_count = attempt_count + ?, "
+            "    updated_at = datetime('now') "
+            "WHERE id = ?",
+            (
+                status,
+                published_url,
+                external_post_id,
+                published_at,
+                last_error,
+                error_code,
+                log_path,
+                1 if increment_attempt else 0,
+                job_id,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_publish_job(db_path: str | Path, job_id: str) -> dict | None:
+    conn = _connect(db_path)
+    try:
+        row = conn.execute(
+            "SELECT * FROM publish_jobs WHERE id = ?", (job_id,)
+        ).fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def get_publish_jobs_for_item(
+    db_path: str | Path, content_item_id: str
+) -> list[dict]:
+    conn = _connect(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT * FROM publish_jobs WHERE content_item_id = ? ORDER BY created_at DESC",
+            (content_item_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def get_failed_publish_jobs(db_path: str | Path) -> list[dict]:
+    conn = _connect(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT * FROM publish_jobs WHERE status = 'failed' ORDER BY updated_at DESC, created_at DESC"
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def get_publish_jobs_by_status(db_path: str | Path, status: str) -> list[dict]:
+    conn = _connect(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT * FROM publish_jobs WHERE status = ? ORDER BY created_at DESC",
+            (status,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def record_schedule_created(
+    db_path: str | Path,
+    *,
+    content_item_id: str,
+    jobs: list[dict[str, Any]],
+) -> list[str]:
+    """Atomically create scheduled publish jobs and transition approved -> scheduled."""
+    if not jobs:
+        raise ValueError("At least one scheduled publish job is required")
+
+    job_ids = [job.get("id") or str(uuid.uuid4()) for job in jobs]
+    conn = _connect(db_path)
+    try:
+        conn.execute("BEGIN")
+        row = conn.execute(
+            "SELECT status FROM content_items WHERE id = ?",
+            (content_item_id,),
+        ).fetchone()
+        if row is None:
+            raise ValueError(f"Content item {content_item_id!r} not found")
+        transition(row["status"], ContentStatus.SCHEDULED)
+
+        for job_id, job in zip(job_ids, jobs):
+            conn.execute(
+                "INSERT INTO publish_jobs "
+                "(id, content_item_id, platform, status, account_id, title, description, "
+                " scheduled_for, platform_metadata, attempt_group_id, updated_at) "
+                "VALUES (?, ?, ?, 'scheduled', ?, ?, ?, ?, ?, ?, datetime('now'))",
+                (
+                    job_id,
+                    content_item_id,
+                    job["platform"],
+                    job["account_id"],
+                    job.get("title"),
+                    job.get("description"),
+                    job["scheduled_for"],
+                    json.dumps(job.get("platform_metadata") or {}),
+                    job_id,
+                ),
+            )
+
+        conn.execute(
+            "UPDATE content_items SET status = 'scheduled', updated_at = datetime('now') "
+            "WHERE id = ?",
+            (content_item_id,),
+        )
+        conn.commit()
+        return job_ids
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def get_due_publish_jobs(
+    db_path: str | Path,
+    *,
+    now: str,
+    limit: int | None = None,
+) -> list[dict]:
+    conn = _connect(db_path)
+    try:
+        query = (
+            "SELECT * FROM publish_jobs "
+            "WHERE status = 'scheduled' AND scheduled_for IS NOT NULL AND scheduled_for <= ? "
+            "ORDER BY scheduled_for ASC, created_at ASC"
+        )
+        params: list[Any] = [now]
+        if limit is not None:
+            query += " LIMIT ?"
+            params.append(limit)
+        rows = conn.execute(query, params).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def mark_publish_job_processing(db_path: str | Path, job_id: str) -> None:
+    conn = _connect(db_path)
+    try:
+        conn.execute(
+            "UPDATE publish_jobs "
+            "SET status = 'processing', last_error = NULL, "
+            "    attempt_count = attempt_count + 1, updated_at = datetime('now') "
+            "WHERE id = ?",
+            (job_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def mark_publish_job_failed(
+    db_path: str | Path,
+    job_id: str,
+    error: str,
+    *,
+    error_code: str | None = None,
+    log_path: str | None = None,
+) -> None:
+    conn = _connect(db_path)
+    try:
+        conn.execute(
+            "UPDATE publish_jobs "
+            "SET status = 'failed', last_error = ?, "
+            "    error_code = COALESCE(?, error_code), "
+            "    log_path = COALESCE(?, log_path), "
+            "    updated_at = datetime('now') "
+            "WHERE id = ?",
+            (error[:1000], error_code, log_path, job_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def requeue_failed_scheduled_publish_job(db_path: str | Path, job_id: str) -> None:
+    conn = _connect(db_path)
+    try:
+        cur = conn.execute(
+            "UPDATE publish_jobs "
+            "SET status = 'scheduled', last_error = NULL, error_code = NULL, "
+            "    updated_at = datetime('now') "
+            "WHERE id = ? AND status = 'failed' AND scheduled_for IS NOT NULL",
+            (job_id,),
+        )
+        if cur.rowcount == 0:
+            raise ValueError(f"Failed scheduled publish job {job_id!r} not found")
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def find_duplicate_scheduled_publish_jobs(
+    db_path: str | Path,
+    *,
+    content_item_id: str,
+    platform: str,
+    account_id: int,
+    scheduled_for: str,
+) -> list[dict]:
+    conn = _connect(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT * FROM publish_jobs "
+            "WHERE content_item_id = ? AND platform = ? AND account_id = ? "
+            "  AND scheduled_for = ? AND status IN ('scheduled', 'processing', 'completed')",
+            (content_item_id, platform, account_id, scheduled_for),
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def record_publish_complete(
+    db_path: str | Path,
+    *,
+    content_item_id: str,
+    job_id: str,
+    published_url: str | None,
+    external_post_id: str | None,
+) -> None:
+    """Atomically transition approved → scheduled → published and update publish job.
+
+    Raises ValueError if item is not in 'approved' status.
+    Raises InvalidTransitionError if state machine rejects the transitions.
+    """
+    conn = _connect(db_path)
+    try:
+        conn.execute("BEGIN")
+        row = conn.execute(
+            "SELECT status FROM content_items WHERE id = ?",
+            (content_item_id,),
+        ).fetchone()
+        if row is None:
+            raise ValueError(f"Content item {content_item_id!r} not found")
+        transition(row["status"], ContentStatus.SCHEDULED)
+        transition(ContentStatus.SCHEDULED, ContentStatus.PUBLISHED)
+        conn.execute(
+            "UPDATE content_items SET status = 'scheduled', updated_at = datetime('now') WHERE id = ?",
+            (content_item_id,),
+        )
+        conn.execute(
+            "UPDATE content_items SET status = 'published', updated_at = datetime('now') WHERE id = ?",
+            (content_item_id,),
+        )
+        conn.execute(
+            "UPDATE publish_jobs "
+            "SET status = 'completed', published_url = ?, external_post_id = ?, published_at = datetime('now') "
+            "WHERE id = ?",
+            (published_url, external_post_id, job_id),
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def record_scheduled_publish_complete(
+    db_path: str | Path,
+    *,
+    content_item_id: str,
+    job_id: str,
+    published_url: str | None,
+    external_post_id: str | None,
+) -> bool:
+    """Complete one scheduled job; publish item when all scheduled jobs are complete.
+
+    Returns True if this call transitioned the item scheduled -> published.
+    """
+    conn = _connect(db_path)
+    try:
+        conn.execute("BEGIN")
+        row = conn.execute(
+            "SELECT status FROM content_items WHERE id = ?",
+            (content_item_id,),
+        ).fetchone()
+        if row is None:
+            raise ValueError(f"Content item {content_item_id!r} not found")
+        transition(row["status"], ContentStatus.PUBLISHED)
+
+        cur = conn.execute(
+            "UPDATE publish_jobs "
+            "SET status = 'completed', published_url = ?, external_post_id = ?, "
+            "    published_at = datetime('now'), last_error = NULL, updated_at = datetime('now') "
+            "WHERE id = ? AND content_item_id = ? AND scheduled_for IS NOT NULL",
+            (published_url, external_post_id, job_id, content_item_id),
+        )
+        if cur.rowcount == 0:
+            raise ValueError(f"Scheduled publish job {job_id!r} not found")
+
+        remaining = conn.execute(
+            "SELECT COUNT(*) FROM publish_jobs "
+            "WHERE content_item_id = ? AND scheduled_for IS NOT NULL "
+            "  AND status != 'completed'",
+            (content_item_id,),
+        ).fetchone()[0]
+
+        transitioned = remaining == 0
+        if transitioned:
+            conn.execute(
+                "UPDATE content_items SET status = 'published', updated_at = datetime('now') "
+                "WHERE id = ?",
+                (content_item_id,),
+            )
+
+        conn.commit()
+        return transitioned
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         conn.close()

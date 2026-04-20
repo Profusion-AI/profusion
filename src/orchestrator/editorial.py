@@ -15,7 +15,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from orchestrator.adapters import claude
-from orchestrator.models import BriefDraft, ScriptBatch, ScriptDraft
+from orchestrator.models import BriefDraft, QAResult, ScriptBatch, ScriptDraft
 
 _PROMPTS_DIR = Path(__file__).parent / "prompts"
 
@@ -44,6 +44,10 @@ DEFAULT_VARIANTS: list[dict[str, str]] = [
         ),
     },
 ]
+
+
+class QACheckError(RuntimeError):
+    """Raised when Claude output cannot be parsed or validated for QA."""
 
 
 class BriefGenerationError(RuntimeError):
@@ -171,3 +175,28 @@ def generate_scripts(
         )
 
     return batch.variants
+
+
+def run_qa_check(
+    *,
+    topic: str,
+    script_text: str,
+    brief_dict: dict,
+) -> QAResult:
+    """Run the editorial risk QA prompt against a rendered artifact; return a validated QAResult."""
+    system = _load_prompt("qa/editorial_risk.md")
+    user = json.dumps(
+        {"topic": topic, "script": script_text, "brief": brief_dict},
+        indent=2,
+    )
+    raw = claude.generate(system=system, user=user, max_tokens=2000)
+    try:
+        parsed = _extract_json_object(raw)
+    except json.JSONDecodeError as e:
+        raise QACheckError(
+            f"Claude did not return parseable JSON for QA: {e}\n---\n{raw[:500]}"
+        ) from e
+    try:
+        return QAResult.model_validate(parsed)
+    except ValidationError as e:
+        raise QACheckError(f"QA JSON failed schema validation: {e}") from e

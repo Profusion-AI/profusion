@@ -93,6 +93,41 @@
 - This keeps the adapter trivially mockable — tests monkeypatch `claude.generate` without touching editorial logic.
 - If the LLM provider changes, only the adapter is affected.
 
+## M2 — Rendering
+
+### Local MP4 required before state transition
+**Decision:** The content item only advances from `scripted` to `rendered` after `final.mp4` exists at a local path and has a non-zero file size. If the MP4 download fails, the item stays `scripted` and the render job is marked `failed`.
+
+**Rationale:**
+- The M2 goal is a "local rendered MP4 artifact." Storing a remote URL that may later disappear violates the local-first principle.
+- A zero-byte file is indistinguishable from a successful download in many checks; explicitly verifying `st_size > 0` catches partial writes.
+- Conservative state advancement keeps the QA and approval gates in M3/M4 working against real local artifacts, not dead links.
+
+### Turbo task_id as render_jobs primary key
+**Decision:** `render_jobs.id` is set to MoneyPrinterTurbo's `task_id` (a UUID returned by `POST /api/v1/videos`).
+
+**Rationale:**
+- Avoids a schema v3 migration for an `external_task_id` column.
+- The Turbo task ID is already globally unique (UUID4) and stable for the lifetime of the job.
+- Makes polling and log correlation trivial: the job ID is the Turbo task ID everywhere.
+
+### video_terms supplied to bypass Turbo's LLM
+**Decision:** The `turbo.py` adapter always supplies both `video_script` (the Profusion-authored script) and `video_terms` (keywords derived from the topic via `_extract_terms()`) in the POST body.
+
+**Rationale:**
+- Turbo's `llm.generate_script()` is bypassed when `video_script` is non-empty.
+- Turbo's `llm.generate_terms()` is bypassed when `video_terms` is provided.
+- This preserves the "Claude is the only LLM" principle. No Turbo-side API key is required.
+- `_extract_terms()` is a pure function (stop-word filter + length filter) that is deterministic and testable without mocking HTTP.
+
+### Render manifest written alongside MP4
+**Decision:** On successful render, a `manifest.json` is written to `data/renders/<task_id>/` alongside `final.mp4`. It records `content_item_id`, `script_variant_id`, `task_id`, `render_profile`, `output_path`, and `created_at`.
+
+**Rationale:**
+- Audits and re-renders need to answer "which script text produced this MP4?" without joining across the DB.
+- The manifest is the artifact-level source-of-truth; the DB row is the process-level record.
+- M3 QA and M4 publishing can load the manifest to validate the publication package without additional DB queries.
+
 ### Default script variants and target duration
 **Decision:** `profusion script` generates three default variants per planned item — `straight_explainer`, `provocative_hook`, `myth_vs_reality` — at a 60-second target.
 
@@ -100,3 +135,90 @@
 - Three variants give enough spread to pick a lane without producing noise.
 - Short-form educational media on the target platforms lives at 30–90s; 60s is the safe middle.
 - Variant names are declarative (specified in the prompt input) so we can validate that Claude returned every requested variant, not just some subset.
+
+## M3 — QA + Approval Gates
+
+### Claude QA uses updated post-render editorial_risk.md prompt
+**Decision:** `profusion qa` runs the `editorial_risk.md` prompt against the rendered artifact's script and brief. The prompt was updated from "before rendering" to post-render context. Output is validated via `QAResult` Pydantic model.
+
+**Rationale:**
+- Reusing the existing editorial risk prompt avoids a new prompt with new schema and test surface.
+- Post-render QA catches risks that survive scripting: stale facts, changed context, render-specific framing.
+- Pydantic validation before state advance means Claude must return well-formed output; malformed output leaves the item in `rendered` rather than silently advancing.
+
+### Approval is a single atomic DB transaction
+**Decision:** `profusion approve` calls `record_approval_decision()` — a single connection that validates precondition, inserts the audit record, and walks `qa_passed → awaiting_approval → final` in one commit.
+
+**Rationale:**
+- The previous design used three separate DB calls, which could strand state without an audit record (if insert_approval_record succeeded but the final status update failed) or create a record without advancing state (if commit ordering was wrong).
+- A single transaction with rollback-on-exception guarantees that either the full decision is recorded or nothing changes.
+
+### revision_requested transitions to scripted, not archived
+**Decision:** A `revision_requested` approval decision returns the item to `scripted` status, enabling new script variants and a re-render without losing the content item.
+
+**Rationale:**
+- `archived` is terminal; revision implies the content concept is sound but the execution needs work.
+- Returning to `scripted` lets the operator run `profusion script` again and pick a better variant, then re-render.
+- Requires the `awaiting_approval → scripted` transition in state.py (added in M3).
+
+## M4 — Publishing
+
+### Immediate publish keeps scheduled transient
+**Decision:** `profusion publish` records a pending `publish_jobs` row, calls the V2/PostBridge adapter immediately, and uses `record_publish_complete()` to walk `approved → scheduled → published` in one transaction.
+
+**Rationale:**
+- Immediate publish is an operator-triggered action, not a durable scheduled state.
+- Keeping both transitions in one transaction prevents an immediate publish from stranding an item in `scheduled`.
+- M5 can introduce real scheduled jobs through separate helpers without changing the M4 command's behavior.
+
+## M5 — Scheduling + Cross-Posting
+
+### publish_jobs is the scheduling table
+**Decision:** Scheduling metadata lives on `publish_jobs` via schema v3 columns rather than a new `schedule_jobs` table.
+
+**Rationale:**
+- A scheduled post is still a publish job; splitting the concept would create unnecessary coordination tables.
+- One row per platform/account target naturally models cross-posting.
+- Existing M4 job inspection and completion semantics remain useful with richer metadata.
+
+### Profusion owns scheduling; PostBridge owns publishing
+**Decision:** M5 stores future publish intent locally and executes due jobs through `profusion publish-due`; it does not delegate future scheduling to PostBridge.
+
+**Rationale:**
+- Local scheduling keeps the approval gate and state machine authoritative.
+- Operators can see items resting in `scheduled` before distribution.
+- PostBridge API scheduling can be added later, but local due execution is easier to test and recover.
+
+### Scheduled completion waits for every target
+**Decision:** A scheduled item transitions `scheduled → published` only after every scheduled target job for that item is `completed`.
+
+**Rationale:**
+- Cross-posting is a coordinated distribution action; one successful target should not make the whole item look published.
+- Partial failures remain visible through failed `publish_jobs` and `last_error`.
+- This gives M6 a clear recovery surface for idempotent retries.
+
+## M6 — Agent Hardening + Operational Durability
+
+### CLI read models are dashboard contracts
+**Decision:** M6 inspection commands expose both human CLI output and `--json` read models generated by orchestrator code, not direct SQLite queries from future UI code.
+
+**Rationale:**
+- M7 will need stable localhost dashboard payloads without moving business logic into React.
+- Retryability, blockage, artifact presence, and next safe commands are orchestration concepts, not presentation-layer guesses.
+- Keeping read models in Python preserves SQLite as the source of truth while making the command layer contract-shaped.
+
+### Retry preserves failed history
+**Decision:** M6 retries never mutate completed jobs and do not erase failed rows. Scheduled publish retries requeue the failed job; immediate publish and render retries create linked attempts.
+
+**Rationale:**
+- The operator must be able to audit what failed and what retry attempt replaced it.
+- `retry_of_job_id` and `attempt_group_id` provide lineage without a separate attempts table.
+- Completed jobs are treated as immutable because retrying them would obscure actual distribution history.
+
+### Measurement remains M8
+**Decision:** The `measured` state remains in the canonical state machine, but measurement and learning-loop implementation moves behind the M7 localhost dashboard.
+
+**Rationale:**
+- M6 hardens current operations; M7 gives the operator a local UI.
+- Measurement depends on durable operator surfaces and should not be conflated with recovery work.
+- Keeping `measured` in the model avoids churn when M8 closes the published → measured loop.
