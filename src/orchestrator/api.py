@@ -11,6 +11,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 import orchestrator.config as config
@@ -24,11 +25,14 @@ from orchestrator.read_models import (
     status_payload,
 )
 from orchestrator.retry import RetryError, retry_publish_job, retry_qa_stage, retry_render_job
+from orchestrator.state import ContentStatus
 
 _DASHBOARD_DIST = Path(__file__).parent.parent.parent / "dashboard" / "dist"
 
+_VALID_STATUSES = {s.value for s in ContentStatus}
 
-def create_app(*, dev: bool = False) -> FastAPI:
+
+def create_app(*, dev: bool = False, dist_path: Path | None = None) -> FastAPI:
     app = FastAPI(title="Profusion Operator API", version="0.1.0")
 
     if dev:
@@ -41,8 +45,28 @@ def create_app(*, dev: bool = False) -> FastAPI:
 
     _register_routes(app)
 
-    if not dev and _DASHBOARD_DIST.is_dir():
-        app.mount("/", StaticFiles(directory=str(_DASHBOARD_DIST), html=True), name="static")
+    _dist = dist_path if dist_path is not None else _DASHBOARD_DIST
+    if not dev and _dist.is_dir():
+        assets_dir = _dist / "assets"
+        if assets_dir.is_dir():
+            app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+
+        _index = str(_dist / "index.html")
+
+        async def _spa_fallback(full_path: str) -> Response:
+            # Serve root-level static files (e.g. favicon.svg) if they exist on disk.
+            # Everything else returns index.html so the React router handles the path.
+            candidate = _dist / full_path
+            if full_path and candidate.exists() and candidate.is_file():
+                return FileResponse(str(candidate))
+            return FileResponse(_index)
+
+        app.add_api_route(
+            "/{full_path:path}",
+            _spa_fallback,
+            methods=["GET"],
+            include_in_schema=False,
+        )
 
     return app
 
@@ -65,6 +89,11 @@ def _require_item(item_id: str) -> dict:
 def _register_routes(app: FastAPI) -> None:
     @app.get("/api/queue")
     def get_queue(status: str | None = None) -> dict[str, Any]:
+        if status is not None and status not in _VALID_STATUSES:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid status {status!r}. Valid values: {sorted(_VALID_STATUSES)}",
+            )
         return status_payload(_db(), status=status)
 
     @app.get("/api/items/{item_id}")

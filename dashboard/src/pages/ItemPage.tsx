@@ -6,6 +6,8 @@ import {
   useItemRenders,
   useItemApprovals,
   useRetryQa,
+  useRetryRender,
+  useRetryPublish,
 } from "../hooks/useItem";
 import StatusBadge from "../components/queue/StatusBadge";
 import BlockageCallout from "../components/item/BlockageCallout";
@@ -25,7 +27,15 @@ export default function ItemPage() {
   const jobsQ = useItemJobs(id!);
   const rendersQ = useItemRenders(id!);
   const approvalsQ = useItemApprovals(id!);
+
+  const latestRenderJobId =
+    ((data?.latest_render_job as Record<string, unknown> | null)?.id as string) ?? "";
+  const latestPublishJobId =
+    ((data?.latest_publish_job as Record<string, unknown> | null)?.id as string) ?? "";
+
   const retryQa = useRetryQa(id!);
+  const retryRender = useRetryRender(id!, latestRenderJobId);
+  const retryPublish = useRetryPublish(id!, latestPublishJobId);
 
   if (isLoading) {
     return <p className="text-slate-500 text-sm py-12 text-center">Loading…</p>;
@@ -43,6 +53,15 @@ export default function ItemPage() {
   if (!data) return null;
 
   const item = data.item as Record<string, unknown>;
+
+  function handleBlockageRetry() {
+    const stage = data!.blockage?.stage;
+    if (stage === "render") retryRender.mutate();
+    else if (stage === "publish") retryPublish.mutate();
+    else retryQa.mutate();
+  }
+
+  const retryPending = retryQa.isPending || retryRender.isPending || retryPublish.isPending;
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "jobs", label: "Jobs" },
@@ -73,17 +92,12 @@ export default function ItemPage() {
         <BlockageCallout
           blockage={data.blockage}
           retry={data.retry}
-          item_id={id!}
-          onRetryQa={() => retryQa.mutate()}
-          retryPending={retryQa.isPending}
+          onRetry={handleBlockageRetry}
+          retryPending={retryPending}
         />
       )}
 
-      {data.next_safe_command && !data.blockage && (
-        <NextSafeCommand command={data.next_safe_command} />
-      )}
-
-      {data.next_safe_command && data.blockage && data.retry.retryable === false && (
+      {data.next_safe_command && (!data.blockage || !data.retry.retryable) && (
         <NextSafeCommand command={data.next_safe_command} />
       )}
 

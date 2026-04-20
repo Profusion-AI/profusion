@@ -206,6 +206,63 @@ def test_post_retry_publish_nonexistent_job_409(client):
 
 
 # ---------------------------------------------------------------------------
+# Status validation
+# ---------------------------------------------------------------------------
+
+def test_get_queue_invalid_status_returns_422(client):
+    tc, *_ = client
+    resp = tc.get("/api/queue?status=bogus")
+    assert resp.status_code == 422
+    assert "bogus" in resp.json()["detail"]
+
+
+def test_get_queue_valid_status_does_not_error(client):
+    tc, db_path, *_ = client
+    insert_content_item(db_path, topic="idea item")
+    for status in ("idea", "planned", "published"):
+        resp = tc.get(f"/api/queue?status={status}")
+        assert resp.status_code == 200, f"status={status!r} should be valid"
+
+
+# ---------------------------------------------------------------------------
+# SPA fallback (prod mode)
+# ---------------------------------------------------------------------------
+
+def test_spa_fallback_serves_index_for_deep_links(tmp_path):
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    (dist / "assets").mkdir()
+    (dist / "index.html").write_text("<html><body>spa</body></html>")
+    app = create_app(dev=False, dist_path=dist)
+    tc = TestClient(app)
+    for path in ["/", "/queue", "/items/some-id", "/logs"]:
+        resp = tc.get(path)
+        assert resp.status_code == 200, f"{path!r} returned {resp.status_code}"
+        assert "spa" in resp.text, f"{path!r} did not return index.html"
+
+
+def test_spa_fallback_api_routes_still_work(tmp_path, monkeypatch):
+    import orchestrator.config as config
+    db_path = tmp_path / "content.db"
+    from orchestrator.db import init_db
+    init_db(db_path)
+    monkeypatch.setattr(config, "DB_PATH", db_path)
+    monkeypatch.setattr(config, "LOGS_DIR", tmp_path / "logs")
+    (tmp_path / "logs").mkdir()
+
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    (dist / "assets").mkdir()
+    (dist / "index.html").write_text("<html>spa</html>")
+
+    app = create_app(dev=False, dist_path=dist)
+    tc = TestClient(app)
+    resp = tc.get("/api/queue")
+    assert resp.status_code == 200
+    assert "items" in resp.json()
+
+
+# ---------------------------------------------------------------------------
 # CORS
 # ---------------------------------------------------------------------------
 

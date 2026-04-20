@@ -52,7 +52,7 @@ export default function ApprovalsTab({ data }: { data: ApprovalsPayload }) {
                       {String(rec.notes ?? "—")}
                     </td>
                     <td className="px-3 py-2 text-slate-400">
-                      {fmtDate(rec.decided_at as string | null)}
+                      {fmtDate(rec.timestamp as string | null)}
                     </td>
                   </tr>
                 );
