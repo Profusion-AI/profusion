@@ -1724,6 +1724,33 @@ def retry(
 
 
 @app.command()
+def serve(
+    host: str = typer.Option("127.0.0.1", "--host", help="Bind address."),
+    port: int = typer.Option(4000, "--port", help="TCP port."),
+    dev: bool = typer.Option(False, "--dev", help="Enable CORS for Vite dev server on :5173."),
+    reload: bool = typer.Option(False, "--reload", help="Auto-reload on source changes."),
+) -> None:
+    """Start the local operator dashboard API server."""
+    import os
+
+    try:
+        import uvicorn  # noqa: F401
+    except ImportError:
+        console.print("[red]uvicorn is not installed. Run: uv sync[/red]")
+        raise typer.Exit(1)
+
+    _ensure_db()
+    if dev:
+        os.environ["PROFUSION_DEV"] = "1"
+    console.print(f"[bold]Profusion dashboard API[/bold] → http://{host}:{port}")
+    if dev:
+        console.print("[dim]Dev mode: CORS enabled for http://localhost:5173[/dim]")
+    import uvicorn as _uvicorn
+
+    _uvicorn.run("orchestrator.api:app", host=host, port=port, reload=reload)
+
+
+@app.command()
 def smoke(
     offline: bool = typer.Option(False, "--offline", help="Run fixture-backed smoke checks without live vendor calls."),
 ) -> None:
