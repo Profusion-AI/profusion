@@ -1,0 +1,59 @@
+[build]
+  command = "corepack pnpm build:netlify"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20.19.6"
+
+[[redirects]]
+  from = "/api/queue"
+  to = "/api/queue.json"
+  status = 200
+
+[[redirects]]
+  from = "/api/logs"
+  to = "/api/logs.json"
+  status = 200
+
+[[redirects]]
+  from = "/api/items/:id/jobs"
+  to = "/api/items/:id/jobs.json"
+  status = 200
+
+[[redirects]]
+  from = "/api/items/:id/renders"
+  to = "/api/items/:id/renders.json"
+  status = 200
+
+[[redirects]]
+  from = "/api/items/:id/approvals"
+  to = "/api/items/:id/approvals.json"
+  status = 200
+
+[[redirects]]
+  from = "/api/items/:id/receipts"
+  to = "/api/items/:id/receipts.json"
+  status = 200
+
+[[redirects]]
+  from = "/api/items/:id"
+  to = "/api/items/:id/index.json"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

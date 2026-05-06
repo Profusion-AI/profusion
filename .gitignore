@@ -12,6 +12,7 @@ dist/
 .env.*
 !.env.example
 .netlify/
+.superpowers/
 
 # Data artifacts
 data/*.db
@@ -19,7 +20,10 @@ data/renders/*
 !data/renders/.gitkeep
 data/logs/*
 !data/logs/.gitkeep
+data/receipts/*
+!data/receipts/.gitkeep
 
 # OS
 .DS_Store
 Thumbs.db
+.directory

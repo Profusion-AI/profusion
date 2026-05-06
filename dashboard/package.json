@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "test:simulator": "rm -rf .tmp-tests && tsc -p tsconfig.test.json && node --test .tmp-tests/scripts/workflowReceiptSimulator.test.js; status=$?; rm -rf .tmp-tests; exit $status",
+    "test:homepage-copy": "node --test scripts/homepageCopy.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

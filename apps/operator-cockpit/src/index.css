@@ -1,0 +1,293 @@
+@import "tailwindcss";
+
+:root {
+  --cockpit-bg: #0c110f;
+  --cockpit-bg-2: #101713;
+  --cockpit-surface: #151c17;
+  --cockpit-surface-2: #1a231d;
+  --cockpit-row: #111713;
+  --cockpit-row-hover: #1d261f;
+  --cockpit-border: #2b342b;
+  --cockpit-border-soft: #202820;
+  --cockpit-text: #e5dfd2;
+  --cockpit-text-2: #b9ae9a;
+  --cockpit-muted: #817866;
+  --cockpit-subtle: #5f594c;
+  --cockpit-gold: #c9a95d;
+  --cockpit-gold-soft: rgba(201, 169, 93, 0.16);
+  --cockpit-danger: #f87171;
+  --cockpit-danger-soft: rgba(248, 113, 113, 0.14);
+  --cockpit-warning: #f5c96b;
+  --cockpit-warning-soft: rgba(245, 201, 107, 0.14);
+  --cockpit-success: #7dd3a8;
+  --cockpit-success-soft: rgba(125, 211, 168, 0.14);
+  --cockpit-info: #7aa7ff;
+  --cockpit-info-soft: rgba(122, 167, 255, 0.14);
+  color: var(--cockpit-text);
+  background: var(--cockpit-bg);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--cockpit-bg);
+}
+
+a {
+  color: inherit;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+button,
+input,
+select {
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+code,
+.mono {
+  font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+.cockpit-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  background: var(--cockpit-bg);
+}
+
+.cockpit-rail {
+  border-right: 1px solid var(--cockpit-border);
+  background: #0f1511;
+  padding: 12px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.rail-link {
+  width: 100%;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 2px solid transparent;
+  color: var(--cockpit-muted);
+  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+}
+
+.rail-link:hover {
+  color: var(--cockpit-text-2);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.rail-link.active {
+  color: var(--cockpit-gold);
+  background: var(--cockpit-gold-soft);
+  border-left-color: var(--cockpit-gold);
+}
+
+.cockpit-main {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.cockpit-topbar {
+  min-height: 57px;
+  border-bottom: 1px solid var(--cockpit-border);
+  background: var(--cockpit-surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 10px 20px;
+}
+
+.cockpit-topbar > div {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.cockpit-topbar p {
+  overflow-wrap: anywhere;
+}
+
+.cockpit-content {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: auto;
+  padding: 20px;
+}
+
+.cockpit-panel {
+  min-width: 0;
+}
+
+.page-title {
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 650;
+  color: var(--cockpit-text);
+}
+
+.section-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cockpit-muted);
+  font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+}
+
+.cockpit-panel {
+  background: var(--cockpit-surface);
+  border: 1px solid var(--cockpit-border);
+  border-radius: 8px;
+}
+
+.cockpit-input,
+.cockpit-select {
+  height: 34px;
+  border-radius: 6px;
+  border: 1px solid var(--cockpit-border);
+  background: var(--cockpit-row);
+  color: var(--cockpit-text);
+  font-size: 12px;
+  padding: 0 10px;
+  outline: none;
+}
+
+.cockpit-input:focus,
+.cockpit-select:focus {
+  border-color: var(--cockpit-gold);
+  box-shadow: 0 0 0 2px rgba(201, 169, 93, 0.12);
+}
+
+.cockpit-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+}
+
+.cockpit-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--cockpit-surface);
+  border-bottom: 1px solid var(--cockpit-border);
+  color: var(--cockpit-muted);
+  font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+  font-weight: 500;
+  padding: 10px 16px;
+  white-space: nowrap;
+}
+
+.cockpit-table td {
+  border-bottom: 1px solid var(--cockpit-border-soft);
+  color: var(--cockpit-text-2);
+  font-size: 12px;
+  padding: 12px 16px;
+  vertical-align: middle;
+}
+
+.cockpit-table tr {
+  background: var(--cockpit-row);
+  transition: background 150ms ease;
+}
+
+.cockpit-table tr:nth-child(even) {
+  background: #131a15;
+}
+
+.cockpit-table tbody tr:hover {
+  background: var(--cockpit-row-hover);
+}
+
+.tone-neutral { color: var(--cockpit-text-2); }
+.tone-muted { color: var(--cockpit-muted); }
+.tone-info { color: var(--cockpit-info); }
+.tone-success { color: var(--cockpit-success); }
+.tone-warning { color: var(--cockpit-warning); }
+.tone-danger { color: var(--cockpit-danger); }
+
+@media (max-width: 760px) {
+  .cockpit-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .cockpit-rail {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    height: 52px;
+    flex-direction: row;
+    border-right: none;
+    border-bottom: 1px solid var(--cockpit-border);
+    padding: 0 8px;
+    overflow-x: auto;
+  }
+
+  .rail-link {
+    width: 44px;
+    min-width: 44px;
+    border-left: none;
+    border-bottom: 2px solid transparent;
+  }
+
+  .rail-link.active {
+    border-left-color: transparent;
+    border-bottom-color: var(--cockpit-gold);
+  }
+
+  .cockpit-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 14px;
+  }
+
+  .cockpit-content {
+    padding: 14px;
+    overflow-x: hidden;
+  }
+
+  .cockpit-content p,
+  .cockpit-content h1,
+  .cockpit-content h2 {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+}

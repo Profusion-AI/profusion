@@ -7,11 +7,16 @@ import {
   useRef,
   useState,
 } from "react";
+import WorkflowReceiptSimulator from "./pages/WorkflowReceiptSimulator";
 
 type StatusName =
   | "AUTHENTIC"
   | "ALTERED DISCLOSED"
   | "REVIEW REQUIRED"
+  | "EVIDENCE CAPTURED"
+  | "HUMAN REVIEW"
+  | "AGENTIC REVIEW GAP"
+  | "LIMITED CLAIMS"
   | "BLOCKED"
   | "DEGRADED"
   | "NOT IMPLEMENTED";
@@ -38,6 +43,26 @@ const statusMap: Record<StatusName, { bg: string; color: string; dot: string }> 
     color: "#9A7A3A",
     dot: "#C7A86B",
   },
+  "EVIDENCE CAPTURED": {
+    bg: "rgba(47,107,79,0.12)",
+    color: "#2F6B4F",
+    dot: "#2F6B4F",
+  },
+  "HUMAN REVIEW": {
+    bg: "rgba(199,168,107,0.15)",
+    color: "#9A7A3A",
+    dot: "#C7A86B",
+  },
+  "AGENTIC REVIEW GAP": {
+    bg: "rgba(91,111,149,0.12)",
+    color: "#5B6F95",
+    dot: "#5B6F95",
+  },
+  "LIMITED CLAIMS": {
+    bg: "rgba(91,111,149,0.12)",
+    color: "#5B6F95",
+    dot: "#5B6F95",
+  },
   BLOCKED: { bg: "rgba(143,47,47,0.10)", color: "#8F2F2F", dot: "#8F2F2F" },
   DEGRADED: { bg: "rgba(166,106,44,0.12)", color: "#A66A2C", dot: "#A66A2C" },
   "NOT IMPLEMENTED": {
@@ -48,181 +73,254 @@ const statusMap: Record<StatusName, { bg: string; color: string; dot: string }> 
 };
 
 const receiptFields = [
-  { key: "session_id", value: "vt_20260428_7F9A" },
-  { key: "declared_mode", value: "altered_disclosed" },
-  { key: "policy_decision", value: "allow_with_watermark" },
-  { key: "watermark_state", value: "enforced" },
-  { key: "runtime_state", value: "local_cpu_degraded" },
-  { key: "outcome", value: "completed · degraded_runtime" },
+  { key: "workflow_id", value: "wf_agentic_change_review_7F9A" },
+  { key: "spec_boundary", value: "customer_visible_change" },
+  { key: "artifacts_captured", value: "spec · diff · tests · review" },
+  { key: "verification_tax", value: "measured_before_scale" },
+  { key: "review_gate", value: "human_reviewed" },
+  { key: "claims_supported", value: "process_evidence_only" },
 ];
 
 const problemCards = [
   {
     icon: <EyeIcon />,
-    heading: "Presence is no longer proof.",
-    body: "A live webcam feed can be altered before it reaches a meeting. The institution cannot trust what it sees.",
-    status: "ALTERED DISCLOSED" as StatusName,
-  },
-  {
-    icon: <ShieldIcon />,
-    heading: "Disclosure is inconsistent.",
-    body: "Most workflows do not force a clear declaration of synthetic or altered media before a session begins.",
+    heading: "AI moved the bottleneck from production to verification.",
+    body: "Coding agents and AI assistants can generate code, content, analysis, and decisions faster than teams can reliably review them.",
     status: "REVIEW REQUIRED" as StatusName,
   },
   {
+    icon: <ReviewIcon />,
+    heading: "Review queues absorb the productivity gain.",
+    body: "Bigger PRs, generated changes, and scattered artifacts turn senior people into validators unless the workflow captures evidence as it moves.",
+    status: "AGENTIC REVIEW GAP" as StatusName,
+  },
+  {
+    icon: <ShieldIcon />,
+    heading: "Specification is now a governance boundary.",
+    body: "The question is not only whether the model can produce work. It is whether the team defined what reliable enough means before approval.",
+    status: "HUMAN REVIEW" as StatusName,
+  },
+  {
     icon: <ReceiptIcon />,
-    heading: "Evidence is missing.",
-    body: "After the call, organizations often lack a durable record of what was declared, enforced, and reviewed.",
-    status: "NOT IMPLEMENTED" as StatusName,
+    heading: "The same gap appears outside engineering.",
+    body: "AI content, synthetic media, recruiting workflows, and client-facing automation all need receipts that show what happened and what the evidence does not prove.",
+    status: "LIMITED CLAIMS" as StatusName,
+  },
+];
+
+const researchSignals = [
+  {
+    source: "arXiv PRP paper",
+    metric: "v1",
+    label: "specification discipline as the bottleneck",
+    body: "A May 2026 preprint frames the reliability constraint as specification discipline, not model capability. Treat it as a design framework, not settled science.",
+    href: "https://arxiv.org/html/2605.01160v1",
+  },
+  {
+    source: "Faros AI telemetry",
+    metric: "98%",
+    label: "more merged pull requests",
+    body: "High-adoption teams saw more merged PRs, but review time rose 91%, average PR size rose 154%, and bugs per developer rose 9%.",
+    href: "https://www.faros.ai/blog/ai-software-engineering",
+  },
+  {
+    source: "Google DORA",
+    metric: "7.2%",
+    label: "lower delivery stability",
+    body: "For every 25% increase in AI adoption, DORA associated AI with lower throughput and lower delivery stability.",
+    href: "https://dora.dev/ai/gen-ai-report/report/",
+  },
+  {
+    source: "METR study",
+    metric: "19%",
+    label: "slower on familiar mature codebases",
+    body: "Experienced developers in a METR study took longer with AI on mature repositories they already knew well.",
+    href: "https://arxiv.org/abs/2507.09089",
   },
 ];
 
 const proofWords = [
-  "Institutions",
-  "Enterprises",
-  "Companies",
-  "Interviewers",
-  "Schools",
-  "Governments",
+  "engineering teams",
+  "coding-agent teams",
+  "AI ops teams",
+  "content ops",
+  "recruiters",
+  "automation teams",
+  "risk teams",
+  "executives",
 ];
 
 const trustSteps: TrustStep[] = [
   {
-    label: "Declare",
+    label: "Map",
     icon: <DeclareIcon />,
-    title: "Attestation before entry",
-    desc: "A session does not enter a high-risk workflow until authenticity or alteration has been explicitly declared by the participant.",
-    details: ["participant_state", "declared_mode", "source_context"],
+    title: "Define the workflow and risk boundary",
+    desc: "Start with one AI-assisted or agentic workflow and make clear what is inside the pilot, what can fail, and who needs to approve the output.",
+    details: ["workflow_scope", "risk_context", "approval_owner"],
   },
   {
-    label: "Enforce",
+    label: "Capture",
     icon: <EnforceIcon />,
-    title: "Policy-driven access",
-    desc: "Policy rules determine whether a declared state is permitted, requires review, or must be blocked before proceeding.",
-    details: ["policy_rules", "access_decision", "review_route"],
-  },
-  {
-    label: "Watermark",
-    icon: <WatermarkIcon />,
-    title: "Visible disclosure layer",
-    desc: "Declared synthetic or altered sessions receive a visible watermark, making the disclosed state persistent in recordings.",
-    details: ["visible_overlay", "metadata_hint", "recording_state"],
-  },
-  {
-    label: "Record",
-    icon: <RecordIcon />,
-    title: "Durable audit receipt",
-    desc: "Every session generates a structured receipt — session ID, declared mode, policy decision, watermark state, timestamp, and runtime.",
-    details: ["session_id", "policy_decision", "runtime_context"],
+    title: "Capture specs, artifacts, and tests",
+    desc: "Preserve the specification, prompts, generated output, diffs, QA checks, test results, review notes, and approvals needed to reconstruct the work.",
+    details: ["spec_boundary", "generated_outputs", "test_evidence"],
   },
   {
     label: "Review",
+    icon: <WatermarkIcon />,
+    title: "Make verification tax visible",
+    desc: "Track where review time, rework, QA failures, approval latency, or senior-engineer validation burden enters the workflow.",
+    details: ["review_gate", "rework_signal", "verification_tax"],
+  },
+  {
+    label: "Bound",
+    icon: <RecordIcon />,
+    title: "State what the evidence supports",
+    desc: "The receipt describes supported claims and known limitations so teams do not imply reliability, compliance, or assurance they have not actually proven.",
+    details: ["supported_claims", "known_limits", "non_claims"],
+  },
+  {
+    label: "Receipt",
     icon: <ReviewIcon />,
-    title: "Human oversight pathway",
-    desc: "Receipts are available for human review. Flagged sessions can be routed to compliance, legal, or trust-and-safety workflows.",
-    details: ["review_queue", "human_decision", "appeal_context"],
+    title: "Produce a productivity-reliability receipt",
+    desc: "Generate a plain-English packet that shows what happened, what passed, who reviewed it, and what remains uncertain before the workflow scales.",
+    details: ["receipt_packet", "review_status", "delivery_record"],
+  },
+];
+
+const governanceLevels = [
+  {
+    level: "Low risk",
+    title: "Lightweight review",
+    body: "Small, reversible AI work can move with a reviewer and basic artifact capture.",
+  },
+  {
+    level: "Medium risk",
+    title: "Written specification",
+    body: "Client-visible or recurring work needs a specification boundary and targeted verification.",
+  },
+  {
+    level: "Cross-cutting",
+    title: "Executable checks",
+    body: "Shared systems need tests, QA evidence, and approval gates before the output scales.",
+  },
+  {
+    level: "High stakes",
+    title: "Constitution plus receipt",
+    body: "Security, privacy, finance, recruiting, or production-impacting workflows need constraints and receipt-level evidence.",
   },
 ];
 
 const labOverview = [
   {
-    label: "WEBCAM ATTESTATION",
-    title: "Declare before the camera starts.",
-    desc: "A session should not enter a high-risk workflow until authenticity or alteration has been explicitly declared.",
+    label: "AI CODING AGENT RELIABILITY",
+    title: "Make agentic engineering work reviewable enough to approve.",
+    desc: "Map the spec boundary, generated changes, tests, review gates, rework signals, and approval evidence around one coding-agent workflow.",
   },
   {
-    label: "DISCLOSURE POLICY",
-    title: "Policy enforces declared state.",
-    desc: "Undeclared synthetic media in high-risk workflows is the problem. The system enforces declaration before access.",
+    label: "AI CONTENT & MEDIA APPROVAL",
+    title: "Show how client-facing AI work was reviewed.",
+    desc: "Capture the brief, generated assets, QA checks, revisions, limitations, and human approval trail before public or client delivery.",
   },
   {
-    label: "VISIBLE WATERMARKING",
-    title: "Alteration stays visible.",
-    desc: "Declared altered or test sessions carry a visible watermark so the disclosure is persistent across recordings.",
+    label: "SYNTHETIC MEDIA RISK",
+    title: "Make synthetic media reviewable before it reaches clients or the public.",
+    desc: "Prototype disclosure, artifact trails, policy decisions, and receipt language for altered or AI-generated media.",
   },
   {
-    label: "AUDIT RECEIPT",
-    title: "The institution has a record.",
-    desc: "Every session generates structured evidence: session ID, declared mode, policy decision, watermark state, runtime.",
+    label: "RECRUITING & STAFFING",
+    title: "Keep AI-mediated work reviewable.",
+    desc: "Prototype evidence receipts for work samples, contractor readiness, and recruiter workflows without automated ranking or hiring decisions.",
+  },
+  {
+    label: "CLIENT-FACING AUTOMATION",
+    title: "Give buyers an evidence layer.",
+    desc: "Help AI automation agencies and consultants show where workflow evidence, human judgment, and limitations enter the system.",
   },
 ];
 
 const architectureLayers = [
-  "Meeting Platform / Workflow",
-  "Profusion Trust Layer",
-  "Policy + Audit + Receipt Engine",
-  "Human Review / Compliance Trail",
+  "AI-Assisted or Agentic Workflow",
+  "Profusion Reliability Evidence Layer",
+  "Spec + Artifact + Test + Review Capture",
+  "Engineering / Client / Risk Approval",
 ];
 
 const statusItems = [
-  ["Prototype status", "Technical lab prototype"],
-  ["Commercial posture", "Not a commercial detection product"],
-  ["Trust mechanism", "Declaration, policy, watermark, receipt, review"],
-  ["Current boundary", "No production assurance or compliance certification"],
+  ["Narrative signal", "Agentic engineering and coding-agent reliability"],
+  ["Implemented proof", "AI-assisted content/media receipt: content_video_receipt in media_trust"],
+  ["Future integration concept", "MCP and coding-agent evidence capture"],
+  ["Current boundary", "Process evidence, not compliance or correctness certification"],
 ];
 
 const services = [
   {
     num: "01",
-    title: "AI Trust & Governance Strategy",
-    tagline: "Risk maps, control design, governance roadmap.",
-    desc: "Map the workflows where AI imitation, synthetic media, or agentic automation creates operational risk — then define the controls that make those workflows governable.",
-    tags: ["Risk Mapping", "Policy Design", "Governance"],
+    title: "AI Workflow Reliability Pilot",
+    tagline: "One workflow, one reliability gap, one receipt.",
+    desc: "Govern one AI-assisted or agentic workflow with a specification boundary, artifact capture, review gates, verification-tax signals, and a workflow receipt.",
+    tags: ["Agentic Workflows", "Reliability", "Receipts"],
   },
   {
     num: "02",
-    title: "Synthetic Media & Video Trust Prototyping",
-    tagline: "Attestation UX, disclosure policy, receipt schema, red-team scenarios.",
-    desc: "Design and prototype the trust layer for video-intensive workflows: declaration flows, policy enforcement, watermarking, and durable receipt generation.",
-    tags: ["Attestation", "Watermarking", "Receipts"],
+    title: "Productivity-Reliability Diagnostic",
+    tagline: "Find where AI output stops being dependable work.",
+    desc: "Map how AI changes review time, PR size, QA failures, approval latency, rework, and senior-person verification burden before scaling the workflow.",
+    tags: ["Verification Tax", "Risk Profile", "Scale Decision"],
   },
   {
     num: "03",
-    title: "Agentic Workflow Evaluation",
-    tagline: "Measurement systems for AI-assisted work.",
-    desc: "Build measurement systems for AI-assisted workflows: productivity scoring, correction loop analysis, risk flagging, and human-oversight integration.",
-    tags: ["Measurement", "Oversight", "Correction Loops"],
+    title: "Workflow Receipt Prototyping",
+    tagline: "Buyer-readable packets for AI work.",
+    desc: "Design plain-English receipts for coding-agent outputs, AI-assisted content, synthetic media, recruiting workflows, and client-facing automation.",
+    tags: ["Artifacts", "Reviews", "Limitations"],
   },
   {
     num: "04",
-    title: "AI Product & MVP Advisory",
+    title: "AI Coding Agent Reliability Pilot",
     tagline: "Product wedge, architecture, launch narrative.",
-    desc: "Define the product wedge, technical architecture, open-source and commercial boundary, and a launch narrative that does not overclaim.",
+    desc: "For AI-forward engineering teams, map one coding-agent workflow around spec boundaries, review gates, verification tax, and receipt-ready evidence.",
     tags: ["Strategy", "Architecture", "Narrative"],
   },
 ];
 
 const clients = [
-  "Organizations running high-stakes video-based workflows — identity, compliance, legal, HR, finance.",
-  "Teams deploying AI agents and needing measurement beyond simple output counts.",
-  "Product companies building trust-sensitive tools for regulated industries.",
-  "Governance, risk, and compliance leaders who need a map before they need a product.",
+  "AI-forward engineering and product teams adopting coding agents in mature codebases with active CI/CD and customer-facing reliability pressure.",
+  "AI content and synthetic media teams that need review gates, artifact trails, and approval receipts.",
+  "Recruiting and staffing firms exploring AI-assisted workflows without automated ranking or black-box hiring decisions.",
+  "AI automation agencies and consultants whose clients need evidence that a workflow is governed.",
+  "Governance, risk, and operations leaders who need workflow-level proof that policy became practice.",
 ];
 
 const principles = [
   {
-    verb: "Declare",
-    subject: "what is synthetic.",
-    body: "Synthetic media is not automatically malicious. Undisclosed synthetic media in high-risk workflows is the problem.",
+    verb: "Map",
+    subject: "the workflow.",
+    body: "The reliability layer starts with one concrete AI-assisted workflow, not a generic responsible-AI claim.",
+  },
+  {
+    verb: "Specify",
+    subject: "the boundary.",
+    body: "Teams need to define what reliable enough means before they ask humans to approve generated work.",
+  },
+  {
+    verb: "Capture",
+    subject: "the evidence.",
+    body: "Specs, artifacts, tests, review notes, approvals, and limitations should survive outside scattered tools and memory.",
   },
   {
     verb: "Preserve",
-    subject: "what is human.",
-    body: "The system should protect consent, identity, context, and human accountability — not just flag anomalies.",
+    subject: "human judgment.",
+    body: "The point is not to automate responsibility away. The point is to show where human review entered the process.",
   },
   {
-    verb: "Record",
-    subject: "what matters.",
-    body: "Trust requires artifacts: receipts, timestamps, decisions, policy states, and review trails.",
-  },
-  {
-    verb: "Escalate",
-    subject: "what is risky.",
-    body: "Not every event should be blocked. Some should be watermarked, reviewed, or routed to a higher-trust flow.",
+    verb: "Limit",
+    subject: "the claim.",
+    body: "A credible receipt says what the evidence supports and what remains outside the captured boundary.",
   },
   {
     verb: "Never overclaim",
-    subject: "detection.",
+    subject: "certainty.",
     body: "A trust system loses credibility the moment marketing outruns the evidence. We keep those two aligned.",
   },
 ];
@@ -286,8 +384,8 @@ function WordMark() {
 function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const links = [
-    { label: "Trust Layer", href: "#trust-layer" },
-    { label: "Video Trust Lab", href: "#video-lab" },
+    { label: "Workflow", href: "#trust-layer" },
+    { label: "Use Cases", href: "#video-lab" },
     { label: "Services", href: "#services" },
     { label: "Principles", href: "#principles" },
   ];
@@ -332,8 +430,8 @@ function ReceiptCard({ animated = false }: { animated?: boolean }) {
   return (
     <div className="receipt-card">
       <div className="receipt-card-header">
-        <span>SESSION RECEIPT</span>
-        <span className="recorded-pill">● RECORDED</span>
+        <span>RELIABILITY RECEIPT</span>
+        <span className="recorded-pill">● REVIEWABLE</span>
       </div>
       <div className="receipt-fields">
         {receiptFields.map((field, index) => (
@@ -347,8 +445,8 @@ function ReceiptCard({ animated = false }: { animated?: boolean }) {
         ))}
       </div>
       <div className="receipt-status-row">
-        <Pill status="ALTERED DISCLOSED" />
-        <Pill status="REVIEW REQUIRED" />
+        <Pill status="EVIDENCE CAPTURED" />
+        <Pill status="HUMAN REVIEW" />
       </div>
     </div>
   );
@@ -407,36 +505,46 @@ function Hero() {
         <div className="hero-copy">
           <div className="hero-badge">
             <span />
-            AI TRUST CONSULTING & R&D
+            AI WORKFLOW RELIABILITY PRACTICE
           </div>
           <h1>
-            Human trust
+            Close the reliability
             <br />
-            <span>for the age of</span>
+            <span>gap in AI-assisted</span>
             <br />
-            synthetic media.
+            work.
           </h1>
           <p className="hero-lede">
-            AI can imitate a face, a voice, a meeting, and a workflow. Profusion AI helps
-            organizations design and prototype trust systems that make high-risk digital
-            interactions governable again.
+            AI agents can generate code, content, analysis, and workflow outputs faster than teams
+            can reliably review them. Profusion helps organizations capture specs, artifacts, tests,
+            reviews, approvals, and limitations into workflow receipts that make AI-assisted work
+            inspectable.
           </p>
           <p className="hero-subcopy">
-            We are a consulting and R&D practice focused on synthetic media, video trust, audit
-            receipts, and AI-mediated work.
+            Profusion does not make AI produce more work. Profusion makes AI-produced work
+            reviewable enough to use. More output is not the same as dependable work.
           </p>
           <div className="hero-actions">
             <a className="button-primary is-light" href="#contact">
-              Discuss a High-Risk Workflow
+              Start with One Workflow
             </a>
-            <a className="button-secondary is-light" href="#video-lab">
-              View the Video Trust Lab
+            <a className="button-secondary is-light" href="#trust-layer">
+              See the Reliability Method
             </a>
           </div>
         </div>
-        <div className="hero-receipt">
-          <div className="receipt-glow" aria-hidden="true" />
-          <ReceiptCard animated />
+        <div className="hero-visual">
+          <div className="hero-brand-lockup" aria-hidden="true">
+            <img
+              alt=""
+              loading="eager"
+              src="/widelogo.png"
+            />
+          </div>
+          <div className="hero-receipt">
+            <div className="receipt-glow" aria-hidden="true" />
+            <ReceiptCard animated />
+          </div>
         </div>
       </ScrollReveal>
       <div className="hero-fade" aria-hidden="true" />
@@ -449,16 +557,20 @@ function Problem() {
     <section className="section section-bone" id="problem">
       <ScrollReveal className="section-inner">
         <div className="section-heading narrow">
-          <Eyebrow>The Problem</Eyebrow>
+          <Eyebrow>Productivity-Reliability Paradox</Eyebrow>
           <h2
-            aria-label="Deepfakes are now commonplace. Institutions, Enterprises, Companies, Interviewers, Schools, and Governments still need proof."
+            aria-label="AI is producing work faster than engineering teams, coding-agent teams, AI operations teams, content operations, recruiters, automation teams, risk teams, and executives can reliably approve it."
             className="proof-headline"
           >
-            Deepfakes are now commonplace.{" "}
+            AI is producing work faster than{" "}
             <RotatingProofWord />
             <br />
-            <span>still need proof.</span>
+            <span>can reliably approve it.</span>
           </h2>
+          <p>
+            Organizations are buying AI productivity, then paying for it again through verification
+            overhead, larger review queues, rework, reliability risk, and weak process evidence.
+          </p>
         </div>
         <div className="problem-grid">
           {problemCards.map((card) => (
@@ -469,6 +581,27 @@ function Problem() {
               <Pill status={card.status} />
             </article>
           ))}
+        </div>
+        <div className="research-panel">
+          <div className="research-intro">
+            <span className="mono-label gold">RESEARCH SIGNAL</span>
+            <h3>AI has moved the bottleneck from production to verification.</h3>
+            <p>
+              The emerging evidence is not a reason to reject AI. It is a reason to govern the
+              handoff from generated output to human approval with specifications, artifacts,
+              tests, review gates, and receipts.
+            </p>
+          </div>
+          <div className="research-grid">
+            {researchSignals.map((signal) => (
+              <a className="research-card" href={signal.href} key={signal.source} rel="noreferrer" target="_blank">
+                <span>{signal.source}</span>
+                <strong>{signal.metric}</strong>
+                <h3>{signal.label}</h3>
+                <p>{signal.body}</p>
+              </a>
+            ))}
+          </div>
         </div>
       </ScrollReveal>
     </section>
@@ -528,11 +661,12 @@ function TrustLayer() {
     <section className="section section-parchment" id="trust-layer">
       <ScrollReveal className="section-inner">
         <div className="section-heading narrow">
-          <Eyebrow>Trust Layer</Eyebrow>
-          <h2>A control layer for high-risk video interactions.</h2>
+          <Eyebrow>Workflow Trust Layer</Eyebrow>
+          <h2>A reliability layer for high-risk AI-assisted work.</h2>
           <p>
-            The goal is not detection alone. The goal is to make video interactions governable —
-            through a sequence of declarations, controls, evidence, and review.
+            The goal is not generic AI governance. The goal is to make AI-assisted and agentic
+            workflows inspectable: what was specified, what the system produced, what evidence
+            exists, what humans reviewed, what changed, and what the receipt does and does not prove.
           </p>
         </div>
 
@@ -574,6 +708,27 @@ function TrustLayer() {
             ))}
           </div>
         </div>
+
+        <div className="governance-guide">
+          <div className="section-heading narrow">
+            <Eyebrow>Specification Governance</Eyebrow>
+            <h2>Match the evidence burden to the failure consequence.</h2>
+            <p>
+              Low-risk AI work does not need the same controls as production, security, privacy,
+              recruiting, financial, or client-facing work. Profusion starts by classifying one
+              workflow, then adds only the review infrastructure the risk justifies.
+            </p>
+          </div>
+          <div className="governance-grid">
+            {governanceLevels.map((item) => (
+              <article className="governance-card" key={item.level}>
+                <span>{item.level}</span>
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </article>
+            ))}
+          </div>
+        </div>
       </ScrollReveal>
     </section>
   );
@@ -596,6 +751,13 @@ function VideoLab() {
               </div>
             ))}
           </div>
+          <p className="architecture-note">
+            <strong>Agentic workflow support:</strong> Profusion adds a receipt layer between
+            agentic work and human approval. Planned integration path: MCP-compatible tools for
+            capturing workflow events, specs, artifacts, test results, review checkpoints, and
+            receipt metadata from agentic environments. Current public proof remains the
+            content/media receipt path until that engineering fixture exists.
+          </p>
         </div>
       );
     }
@@ -630,21 +792,21 @@ function VideoLab() {
     <section className="section section-bone" id="video-lab">
       <ScrollReveal className="section-inner">
         <div className="section-heading narrow">
-          <Eyebrow>Video Trust Lab</Eyebrow>
-          <h2>Before video can be trusted, it needs governance.</h2>
+          <Eyebrow>Where We Start</Eyebrow>
+          <h2>Start where AI productivity is creating review burden.</h2>
           <p>
-            Profusion AI is developing a local-first R&D prototype for high-risk webcam sessions:
-            pre-session attestation, enforced disclosure for altered media, visible watermarking,
-            and durable trust receipts that record what was declared, enforced, and reviewed.
+            Coding agents are the sharpest signal because the review cost is visible in PRs, tests,
+            rework, and release risk. The same pattern lands near-term in AI content, synthetic
+            media, recruiting, and client-facing automation where final output is not enough.
           </p>
         </div>
 
         <div className="lab-status">
           <span />
-          Current status: technical lab prototype, not a commercial detection product.
+          Pilot engagements begin with one workflow, one reliability question, and one reviewable receipt.
         </div>
 
-        <div className="tabs" role="tablist" aria-label="Video Trust Lab tabs">
+        <div className="tabs" role="tablist" aria-label="Workflow trust use case tabs">
           {tabs.map((item) => (
             <button
               aria-selected={tab === item}
@@ -673,7 +835,7 @@ function Services() {
       <ScrollReveal className="section-inner">
         <div className="section-heading narrow">
           <Eyebrow>Consulting Services</Eyebrow>
-          <h2>Governance by design. Not panic by PowerPoint.</h2>
+          <h2>Turn AI productivity into reviewable evidence.</h2>
         </div>
         <div className="services-grid">
           {services.map((service) => (
@@ -701,10 +863,10 @@ function IdealClients() {
       <ScrollReveal className="section-inner clients-grid">
         <div>
           <Eyebrow>Ideal Clients</Eyebrow>
-          <h2>For organizations where a trust failure has real consequences.</h2>
+          <h2>For teams whose AI work needs to survive review.</h2>
           <p>
-            We work best with teams who understand that the threat model has changed, and who need
-            a structured approach — not a vendor pitch.
+            We work best with teams who already feel the gap between moving faster with AI and
+            proving the work was specified, tested, reviewed, approved, and honestly bounded.
           </p>
         </div>
         <div className="client-list">
@@ -726,8 +888,8 @@ function Principles() {
       <ScrollReveal className="section-inner">
         <div className="section-heading narrow">
           <Eyebrow light>Operating Principles</Eyebrow>
-          <h2>Trust is not a vibe.</h2>
-          <p>It is a sequence of declarations, controls, evidence, and review.</p>
+          <h2>Reliability is not a vibe.</h2>
+          <p>It is workflow scope, specification discipline, artifact capture, human review, limitations, and receipts.</p>
         </div>
         <div className="principles-list">
           {principles.map((principle) => (
@@ -790,15 +952,15 @@ function Contact() {
       <ScrollReveal className="section-inner contact-grid">
         <div>
           <Eyebrow light>Contact</Eyebrow>
-          <h2>Start a trust strategy session.</h2>
+          <h2>Start with one workflow where review is the bottleneck.</h2>
           <p>
-            We work with a small number of organizations at a time. If you are building governance
-            for AI-mediated workflows, let&apos;s talk.
+            We work with a small number of teams at a time. If one AI-assisted or agentic workflow
+            is producing output faster than your team can confidently approve it, start there.
           </p>
           <div className="contact-notes">
-            <ContactNote icon={<ReceiptIcon small />} text="First session is diagnostic: map risks, identify control gaps." />
-            <ContactNote icon={<ShieldIcon small />} text="Work product: receipts, policy specs, governance recommendations." />
-            <ContactNote icon={<EyeIcon small />} text="No retainers, no lock-in. Engagements by scope." />
+            <ContactNote icon={<ReceiptIcon small />} text="First session: map one workflow, its spec boundary, and its verification tax." />
+            <ContactNote icon={<ShieldIcon small />} text="Work product: reliability receipts, review gates, and limitation language." />
+            <ContactNote icon={<EyeIcon small />} text="No long-term lock-in. Engagements are scoped around a defined workflow." />
           </div>
         </div>
 
@@ -815,7 +977,7 @@ function Contact() {
             <input
               type="hidden"
               name="subject"
-              value="Profusion AI trust strategy session request"
+              value="Profusion AI workflow reliability session request"
             />
             <p hidden>
               <label>
@@ -823,7 +985,7 @@ function Contact() {
                 <input name="bot-field" tabIndex={-1} />
               </label>
             </p>
-            <span className="mono-label gold">TRUST STRATEGY SESSION REQUEST</span>
+            <span className="mono-label gold">WORKFLOW RELIABILITY SESSION REQUEST</span>
             <label>
               Name
               <input
@@ -861,7 +1023,7 @@ function Contact() {
               <textarea
                 name="context"
                 onChange={(event) => updateField("context", event.target.value)}
-                placeholder="Briefly describe the workflow or risk you're thinking about..."
+                placeholder="Briefly describe the AI-assisted or agentic workflow, output, review burden, or reliability problem..."
                 rows={4}
                 value={form.context}
               />
@@ -908,10 +1070,10 @@ function Footer() {
           <LogoIcon />
           <span>Profusion AI</span>
         </div>
-        <span>Human trust for the age of synthetic media. © 2026</span>
+        <span>Reliability evidence for AI-assisted work. © 2026</span>
         <div className="footer-links">
-          <a href="#trust-layer">Trust Layer</a>
-          <a href="#video-lab">Video Trust Lab</a>
+          <a href="#trust-layer">Workflow Trust</a>
+          <a href="#video-lab">Use Cases</a>
           <a href="#services">Services</a>
           <a href="#contact">Contact</a>
         </div>
@@ -936,7 +1098,7 @@ function Pill({ status }: { status: StatusName }) {
 }
 
 function LogoIcon() {
-  return <img alt="" aria-hidden="true" className="logo-icon" src="/profusion-aperture.png" />;
+  return <img alt="" aria-hidden="true" className="logo-icon" src="/aperture-logo-alone.png" />;
 }
 
 function IconSvg({
@@ -1046,18 +1208,28 @@ function CheckIcon() {
 }
 
 export default function App() {
+  const isSimulatorRoute = ["/workflow-receipt-simulator", "/simulator"].includes(
+    window.location.pathname,
+  );
+
   return (
     <>
       <Nav />
       <main>
-        <Hero />
-        <Problem />
-        <TrustLayer />
-        <VideoLab />
-        <Services />
-        <IdealClients />
-        <Principles />
-        <Contact />
+        {isSimulatorRoute ? (
+          <WorkflowReceiptSimulator />
+        ) : (
+          <>
+            <Hero />
+            <Problem />
+            <TrustLayer />
+            <VideoLab />
+            <Services />
+            <IdealClients />
+            <Principles />
+            <Contact />
+          </>
+        )}
       </main>
       <Footer />
     </>

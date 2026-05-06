@@ -1,5 +1,22 @@
 # Profusion Directional Specification
 
+# Superseded
+
+This document has been superseded for current implementation purposes.
+
+Current roadmap:
+`docs/ROADMAP.md`
+
+Current M7 source of truth:
+`docs/milestones/M7_OPERATOR_COCKPIT_PRD_TTD.md`
+
+Current M7.5 source of truth:
+`docs/milestones/M7_5_REVIEWER_EVIDENCE_PRD_TTD.md`
+
+This file is preserved for historical context.
+
+---
+
 ## Purpose
 
 Profusion is a local-first, approval-gated content operating system for

@@ -222,3 +222,62 @@
 - M6 hardens current operations; M7 gives the operator a local UI.
 - Measurement depends on durable operator surfaces and should not be conflated with recovery work.
 - Keeping `measured` in the model avoids churn when M8 closes the published → measured loop.
+
+## 2026-05-03 — M7/M7.5 Strategic Boundary
+
+### Broader evidence system without erasing the content OS
+**Decision:** Profusion AI is evolving into a governed AI-mediated workflow evidence system, while the current repo remains the first governed workflow inside that architecture: a local-first content operating system for AI-assisted media creation, review, rendering, publishing, and receipt generation.
+
+**Rationale:**
+- M0-M6 already established a working content operating substrate.
+- Reframing the repo too aggressively would turn M7 into a pivot project and obscure what has already been built.
+- The broader evidence architecture gives M7.5 receipts and later Work Trust a coherent home without disrupting the current state machine.
+
+### M7 cockpit is separate from the public website
+**Decision:** Keep `dashboard/` as the public Netlify website for now and create the internal operator cockpit under `apps/operator-cockpit/`.
+
+**Rationale:**
+- `dashboard/` is the current Netlify build base and public website entrypoint.
+- The prior operator routes still exist, but the active Vite entrypoint now renders the public site.
+- A separate cockpit app gives M7 a clear internal boundary without renaming or moving the deployed website.
+- The repo does not need a full monorepo conversion yet; a standalone Vite app is enough for M7.
+
+### M7 mutating actions are safe retry only
+**Decision:** M7 may expose guarded safe retry actions. Approve, schedule, publish, archive, and other broad state-moving operations should be displayed as next safe commands, not clickable cockpit controls.
+
+**Rationale:**
+- The original pipeline is approval-gated and operator-controlled.
+- Retry semantics are already conservative and auditable.
+- Broad action buttons would increase operational risk before the cockpit has earned that authority.
+
+### M7.5 receipts are file-first
+**Decision:** Start receipt/evidence primitives as typed Python models, templates, and generated files. Do not add SQLite receipt tables in the first M7.5 pass unless file-first generation proves impossible.
+
+**Rationale:**
+- The receipt shape needs to survive a real demo or pilot before being locked into migrations.
+- File artifacts are easier to inspect, revise, and package for buyer review.
+- The existing content workflow already has enough state to generate the first receipt without changing the core schema.
+
+### First receipt is content_video_receipt
+**Decision:** The first receipt is `content_video_receipt` under `trust_domain: media_trust`, generated from the existing content item, render, QA, approval, artifact, log, and handoff flow. `live_session_receipt` is reserved for the separate live webcam/trust-session path later.
+
+**Rationale:**
+- The content workflow exists now and can produce evidence without a new product surface.
+- `video_trust` alone is ambiguous because it can mean content-pipeline video or live webcam sessions.
+- Splitting receipt types keeps the architecture extensible without pretending both modes are ready.
+
+### Receipt approval is separate from content approval
+**Decision:** Receipt artifacts have their own status: `draft`, `reviewed`, `approved_for_packet`, and `delivered`.
+
+**Rationale:**
+- Content approval means a media item is cleared for publishing or scheduling.
+- Receipt approval means the evidence artifact is accurate, bounded, and safe to show externally.
+- Those are different claims and should not be collapsed.
+
+### Work Trust remains additive and deferred
+**Decision:** Treat "Profusion Work Trust Lab" as an internal business-line/R&D label for now. The implementation term is `work_trust`, and the future receipt mode is `agentic_capability_receipt`.
+
+**Rationale:**
+- Work Trust should enter through the evidence/receipt architecture after M7.5, not as a separate app or M7 pivot.
+- The first internal scenario archetype can be `agentic_qa_evaluation_analyst`.
+- Buyer-facing language should avoid automated hiring, ranking, hire/no-hire, and role-fit recommendation claims.

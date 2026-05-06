@@ -25,6 +25,7 @@ def client(monkeypatch, tmp_path):
     monkeypatch.setattr(config, "LOGS_DIR", logs_dir)
     monkeypatch.setattr(config, "POST_BRIDGE_API_KEY", "test-key")
     monkeypatch.setattr(config, "RENDERS_DIR", tmp_path / "renders")
+    monkeypatch.setattr(config, "RECEIPTS_DIR", tmp_path / "receipts")
     app = create_app(dev=True)
     return TestClient(app), db_path, logs_dir, tmp_path
 
@@ -132,6 +133,39 @@ def test_get_item_approvals_returns_effective_decision(client):
     body = resp.json()
     assert "effective_decision" in body
     assert body["effective_decision"] == "approved"
+
+
+def test_get_item_receipts_returns_current_lifecycle_status(client):
+    tc, db_path, logs_dir, tmp_path = client
+    from orchestrator.receipts.generator import (
+        generate_content_video_receipt,
+        transition_receipt,
+    )
+
+    item_id, *_ = _seed_approved_item(db_path, tmp_path)
+    generated = generate_content_video_receipt(
+        db_path=db_path,
+        logs_dir=logs_dir,
+        receipts_dir=tmp_path / "receipts",
+        item_id=item_id,
+    )
+    transition_receipt(
+        receipts_dir=tmp_path / "receipts",
+        receipt_id=generated.receipt_id,
+        to_status="reviewed",
+    )
+
+    resp = tc.get(f"/api/items/{item_id}/receipts")
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["item_id"] == item_id
+    assert body["receipt_count"] == 1
+    assert body["receipts"][0]["receipt_id"] == generated.receipt_id
+    assert body["receipts"][0]["receipt_status"] == "reviewed"
+    assert body["receipts"][0]["status_history"][-1]["to_status"] == "reviewed"
+    assert body["receipts"][0]["receipt_type"] == "content_video_receipt"
+    assert body["receipts"][0]["evidence_json"].endswith("evidence.json")
 
 
 # ---------------------------------------------------------------------------

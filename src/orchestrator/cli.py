@@ -20,6 +20,8 @@ app = typer.Typer(
     help="Profusion Content Pipeline — semi-autonomous educational media engine.",
     no_args_is_help=True,
 )
+receipt_app = typer.Typer(help="Generate and inspect reviewer evidence receipts.")
+app.add_typer(receipt_app, name="receipt")
 console = Console()
 
 
@@ -491,6 +493,131 @@ def _format_handoff_markdown(payload: dict) -> str:
         for row in payload["recent_logs"][:5]:
             lines.append(f"- {row['modified_at']} {row['path']}")
     return "\n".join(lines) + "\n"
+
+
+# ---------------------------------------------------------------------------
+# M7.5 receipt surfaces
+# ---------------------------------------------------------------------------
+
+@receipt_app.command("draft")
+def receipt_draft(
+    item_id: str = typer.Option(..., "--item-id", help="Content item id (or unique prefix)."),
+    json_output: bool = typer.Option(False, "--json", help="Emit machine-readable JSON."),
+) -> None:
+    """Generate a draft content_video_receipt evidence packet."""
+    _ensure_db()
+    import orchestrator.config as config
+    from orchestrator.receipts.generator import (
+        ReceiptEligibilityError,
+        generate_content_video_receipt,
+    )
+
+    item = _resolve_item(item_id)
+    try:
+        receipt = generate_content_video_receipt(
+            db_path=_db_path(),
+            logs_dir=_logs_dir(),
+            receipts_dir=config.RECEIPTS_DIR,
+            item_id=item["id"],
+        )
+    except ReceiptEligibilityError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(code=1)
+
+    payload = receipt.to_payload()
+    if json_output:
+        _emit_json(payload)
+        return
+
+    _print_key_values(
+        "Profusion Receipt Draft",
+        [
+            ("Receipt", payload["receipt_id"]),
+            ("Type", payload["receipt_type"]),
+            ("Status", payload["receipt_status"]),
+            ("Item", payload["subject_id"]),
+            ("Packet", payload["packet_dir"]),
+            ("Receipt Markdown", payload["receipt_md"]),
+            ("Evidence JSON", payload["evidence_json"]),
+        ],
+    )
+
+
+@receipt_app.command("list")
+def receipt_list(
+    item_id: str = typer.Option(..., "--item-id", help="Content item id (or unique prefix)."),
+    json_output: bool = typer.Option(False, "--json", help="Emit machine-readable JSON."),
+) -> None:
+    """List generated receipt packets for a content item."""
+    _ensure_db()
+    import orchestrator.config as config
+    from orchestrator.receipts.generator import receipts_payload
+
+    item = _resolve_item(item_id)
+    payload = receipts_payload(receipts_dir=config.RECEIPTS_DIR, item_id=item["id"])
+    if json_output:
+        _emit_json(payload)
+        return
+
+    table = Table(title=f"Receipts for {item['id'][:12]}")
+    table.add_column("ID")
+    table.add_column("Type")
+    table.add_column("Status")
+    table.add_column("Created")
+    table.add_column("Packet")
+    for receipt in payload["receipts"]:
+        table.add_row(
+            str(receipt.get("receipt_id", ""))[:18],
+            str(receipt.get("receipt_type") or "—"),
+            str(receipt.get("receipt_status") or "—"),
+            str(receipt.get("created_at") or "—"),
+            str(receipt.get("packet_dir") or "—"),
+        )
+    console.print(table)
+
+
+@receipt_app.command("transition")
+def receipt_transition(
+    receipt_id: str = typer.Option(..., "--receipt-id", help="Receipt packet id."),
+    to_status: str = typer.Option(
+        ...,
+        "--to",
+        help="Next status: reviewed, approved_for_packet, or delivered.",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Emit machine-readable JSON."),
+) -> None:
+    """Move a receipt packet through the reviewer delivery lifecycle."""
+    import orchestrator.config as config
+    from orchestrator.receipts.generator import (
+        ReceiptTransitionError,
+        transition_receipt,
+    )
+
+    try:
+        payload = transition_receipt(
+            receipts_dir=config.RECEIPTS_DIR,
+            receipt_id=receipt_id,
+            to_status=to_status,
+        )
+    except ReceiptTransitionError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(code=1)
+
+    if json_output:
+        _emit_json(payload)
+        return
+
+    _print_key_values(
+        "Profusion Receipt Transition",
+        [
+            ("Receipt", payload["receipt_id"]),
+            ("Type", payload["receipt_type"]),
+            ("Status", payload["receipt_status"]),
+            ("Item", payload["subject_id"]),
+            ("Packet", payload["packet_dir"]),
+            ("Updated", payload.get("receipt_status_updated_at") or "unknown"),
+        ],
+    )
 
 
 # ---------------------------------------------------------------------------

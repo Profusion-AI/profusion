@@ -25,6 +25,7 @@ from orchestrator.read_models import (
     status_payload,
 )
 from orchestrator.retry import RetryError, retry_publish_job, retry_qa_stage, retry_render_job
+from orchestrator.receipts import receipts_payload
 from orchestrator.state import ContentStatus
 
 _DASHBOARD_DIST = Path(__file__).parent.parent.parent / "dashboard" / "dist"
@@ -115,6 +116,11 @@ def _register_routes(app: FastAPI) -> None:
     def get_item_approvals(item_id: str) -> dict[str, Any]:
         _require_item(item_id)
         return approvals_payload(_db(), item_id)
+
+    @app.get("/api/items/{item_id}/receipts")
+    def get_item_receipts(item_id: str) -> dict[str, Any]:
+        item = _require_item(item_id)
+        return receipts_payload(receipts_dir=config.RECEIPTS_DIR, item_id=item["id"])
 
     @app.get("/api/logs")
     def get_logs(
