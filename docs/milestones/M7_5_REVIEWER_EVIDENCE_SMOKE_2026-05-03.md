@@ -2,6 +2,16 @@
 
 Date: 2026-05-03
 
+## Current Status Update: 2026-05-07
+
+This smoke note is historical and remains valid for the May 3 M7.5 first-slice
+verification. Since then, M7 has been formally locked in
+`docs/milestones/M7_OPERATOR_COCKPIT_FINAL_CLOSEOUT_2026-05-06.md`.
+
+The real demo receipt should remain `draft` unless Kyle explicitly reviews and
+advances it. M8 remains deferred; do not use the final paragraph of this smoke
+note as authorization to begin measurement loops.
+
 ## Scope
 
 This smoke pass covers the first implemented M7.5 slice:
@@ -125,7 +135,5 @@ the terminal-only draft command state.
 - The sample packet contains no customer portal, Work Trust, candidate ranking,
   automated hiring, hire/no-hire, identity-verification, liveness-verification,
   or detector-grade claims.
-- M8 may start manual measurement loops after Kyle confirms whether draft
-  receipts are enough for the first reviewer conversation or whether a
-  `reviewed -> approved_for_packet -> delivered` receipt lifecycle command is
-  required first.
+- M8 remains deferred until buyer conversations or pilot delivery prove
+  measurement loops are the blocking requirement.

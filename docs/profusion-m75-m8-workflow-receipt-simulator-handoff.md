@@ -6,6 +6,31 @@
 
 ---
 
+## 2026-05-07 Status Update
+
+This handoff has been partially executed and should be read as historical
+implementation context, not as a fresh start instruction.
+
+Current state:
+
+- M7 is locked and shipped in commit
+  `f711908 M7 closeout: lock operator cockpit and receipt preview`.
+- The dirty-worktree warning in Section 13 is obsolete.
+- The Workflow Receipt Simulator and buyer-readable collateral now exist as
+  part of the committed M7.75/M7.5 bridge snapshot.
+- The public homepage has been production-deployed with the
+  productivity-reliability wedge.
+- M8 remains deferred.
+- The real demo receipt remains `draft` unless Kyle explicitly reviews and
+  advances it.
+
+Current source-of-truth docs:
+
+- `STATUS.md`
+- `docs/ROADMAP.md`
+- `docs/milestones/M7_OPERATOR_COCKPIT_FINAL_CLOSEOUT_2026-05-06.md`
+- `docs/profusion-m775-implementation-alignment-addendum-2026-05-06.md`
+
 ## 1. Executive verdict
 
 Profusion should not start M8 yet.
@@ -464,7 +489,12 @@ This gives credibility without giving away the commercial operating system.
 
 ### Step 0 — Preserve the current verified state
 
-Before new work, inspect `git status`. The M7/M7.5 worktree is broad and dirty according to the status review. Do not start simulator work until the current boundary is documented or committed.
+Historical note: before the May 6 closeout commit, the M7/M7.5 worktree was
+broad and dirty according to the status review. That boundary has since been
+documented and committed in `f711908`.
+
+Before new work, still inspect `git status`, but do not treat the old dirty-tree
+warning as current state.
 
 Minimum action:
 

@@ -2,6 +2,23 @@
 
 Date: 2026-05-06
 
+## 2026-05-07 Update
+
+This review was written before the final M7 lock commit. It remains useful as a
+technical/business analysis of the M7-to-M8 boundary, but the closeout state has
+changed:
+
+- M7 is now formally locked and shipped.
+- The broad dirty-worktree risk called out below was resolved by commit
+  `f711908 M7 closeout: lock operator cockpit and receipt preview`.
+- The current M7 source of truth is
+  `docs/milestones/M7_OPERATOR_COCKPIT_FINAL_CLOSEOUT_2026-05-06.md`.
+- M8 remains deferred. Do not start measurement loops from this review unless
+  the roadmap is explicitly updated or buyer/pilot signal makes measurement the
+  blocking requirement.
+- The current real demo receipt remains `draft` unless Kyle explicitly reviews
+  and advances it.
+
 Purpose: review Profusion's development status between M7 and M8, analyze the project from technical and business perspectives using the two newest authored markdown documents, and surface assumptions to resolve before executing the next milestones.
 
 ## Scope And Source Notes
@@ -77,11 +94,15 @@ Implemented and verified:
 - Static Netlify preview export using generated read-only `/api/*` JSON.
 - Public `dashboard/` boundary preserved for the production website.
 
-Residual M7 risks:
+Residual M7 risks as of the original review:
 
-- The worktree is broad and dirty; M7/M7.5 work is not yet captured in a clean commit.
+- Resolved after the original review: the M7/M7.5 worktree had not yet been
+  captured in a clean commit.
 - Remote cockpit preview is static, not a live hosted cockpit.
 - The cockpit is internal-operator tooling, not a buyer-facing product.
+
+2026-05-07 note: the dirty-worktree risk was resolved by commit `f711908`.
+The static-preview and internal-tooling boundaries still apply.
 
 ## M7.5 Status
 

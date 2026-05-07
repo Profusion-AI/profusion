@@ -95,11 +95,16 @@ The important business interpretation is:
 - M7 is not the eventual B2B customer portal.
 - M7 is an internal operator cockpit that now needs a clean surface boundary.
 
-M7 has a UX breakdown, but not a clean standalone M7 PRD or TTD. The intent is
-spread across the M6 readiness note, directional spec, decisions log, API tests,
-and current status reconciliation. A future M7 closeout should create a single
-source of truth that combines product requirements, technical design, acceptance
-criteria, and UX states.
+M7 now has a clean standalone source-of-truth trail:
+
+- `docs/milestones/M7_OPERATOR_COCKPIT_PRD_TTD.md`
+- `docs/milestones/M7_OPERATOR_COCKPIT_SMOKE_2026-05-03.md`
+- `docs/milestones/M7_OPERATOR_COCKPIT_CLOSEOUT_2026-05-03.md`
+- `docs/milestones/M7_OPERATOR_COCKPIT_FINAL_CLOSEOUT_2026-05-06.md`
+
+The old issue was that intent was spread across the M6 readiness note,
+directional spec, decisions log, API tests, and status reconciliation. That is
+now resolved for M7.
 
 ## What M7 Should Provide
 

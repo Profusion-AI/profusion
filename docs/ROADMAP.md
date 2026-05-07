@@ -146,6 +146,28 @@ The following are out of scope for M7 and M7.5:
 
 ## Current Verification Baseline
 
+Latest M7 lock verification on 2026-05-06:
+
+```bash
+uv run pytest
+uv run profusion smoke --offline
+cd apps/operator-cockpit && corepack pnpm test
+cd apps/operator-cockpit && corepack pnpm lint
+cd apps/operator-cockpit && corepack pnpm build:netlify
+cd apps/operator-cockpit && corepack pnpm smoke:static
+```
+
+Observed results:
+
+- `uv run pytest`: 182 passed
+- `uv run profusion smoke --offline`: passed
+- `cd apps/operator-cockpit && corepack pnpm test`: 3 files passed, 9 tests passed
+- `cd apps/operator-cockpit && corepack pnpm lint`: passed
+- `cd apps/operator-cockpit && corepack pnpm build:netlify`: exported 2 static item snapshots and built successfully
+- `cd apps/operator-cockpit && corepack pnpm smoke:static`: passed for 2 items
+
+Historical pre-implementation verification on 2026-05-03:
+
 Verification run on 2026-05-03:
 
 ```bash

@@ -90,7 +90,8 @@ backend and it does not perform mutations.
 The operational step before showing the cockpit externally is:
 
 ```text
-run the demo receipt to the intended lifecycle state
+review the demo receipt language, limitations, supported claims, and non-claims
+keep the receipt draft unless Kyle explicitly approves a lifecycle transition
 rebuild the static cockpit snapshot
 deploy a fresh Netlify draft
 smoke the draft
@@ -411,4 +412,3 @@ The vision becomes misaligned if Profusion is described primarily as:
 Profusion started with media because media gave the project a concrete workflow
 to govern. The broader business is trust receipts for high-risk AI-mediated
 workflows.
-

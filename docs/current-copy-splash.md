@@ -4,6 +4,18 @@ Date: 2026-05-05
 
 Source: `dashboard/src/App.tsx`
 
+Status: superseded by the 2026-05-06/2026-05-07 reliability-gap homepage.
+This file preserves the earlier workflow-trust homepage copy for reference. Do
+not treat it as the current live `dashboard/src/App.tsx` copy.
+
+Current homepage source of truth:
+
+```text
+dashboard/src/App.tsx
+docs/profusion-homepage-reliability-gap-update-2026-05-05.md
+docs/profusion-m775-implementation-alignment-addendum-2026-05-06.md
+```
+
 Purpose: preserve the current public homepage/splash-page copy as reference
 material for positioning, outbound, landing-page variants, and future copy
 edits.
