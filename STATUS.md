@@ -2,7 +2,7 @@
 
 ## Current Project State: Profusion split from education/content engine; M7 locked; M7.5 receipt slice complete; M8 outcome observations in progress
 
-As of 2026-05-17, Profusion is the B2B workflow-trust project. The real education/content engine, MoneyPrinterTurbo/MoneyPrinterV2 lineage, Substack package work, source packs, voice guides, and owned-media drafts now belong to `/home/kyle/attention-media-lab`. Profusion may keep a sanitized AI-assisted media/content demo only to explain receipt mechanics.
+As of 2026-05-17, Profusion is the B2B workflow-trust project. The real education/content engine, MoneyPrinterTurbo/MoneyPrinterV2 lineage, Substack package work, source packs, voice guides, and owned-media drafts now belong to `/home/kyle/attention-media-lab`. Profusion may keep a sanitized AI-assisted media/content demo only to explain receipt mechanics. The Profusion vendor submodules remain temporarily for legacy/demo compatibility; removal is deferred until fixture-backed demo receipts replace live render/publish.
 
 As of 2026-05-08, M6 remains functionally closed and M7 is locked as the
 internal operator cockpit milestone. M8 has now started as manual workflow

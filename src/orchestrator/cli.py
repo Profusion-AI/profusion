@@ -1135,7 +1135,7 @@ def render(
         False, "--force", help="Submit even if a pending/processing job already exists."
     ),
 ) -> None:
-    """Render a scripted content item via MoneyPrinterTurbo."""
+    """Legacy/demo render path. Not part of the current B2B product promise."""
     import json as _json
     import time
     from dataclasses import asdict
@@ -1153,6 +1153,11 @@ def render(
         update_render_job,
     )
     from orchestrator.state import ContentStatus, InvalidTransitionError, transition
+
+    console.print(
+        "[yellow]Legacy demo path:[/yellow] live MoneyPrinter render/publish tooling has moved to "
+        "/home/kyle/attention-media-lab. Profusion keeps this only for sanitized demo compatibility."
+    )
 
     _ensure_db()
     item = _resolve_item(item_id)
@@ -1655,11 +1660,16 @@ def publish(
     title: str | None = typer.Option(None, "--title"),
     description: str | None = typer.Option(None, "--description"),
 ) -> None:
-    """Publish approved content via MoneyPrinterV2/PostBridge."""
+    """Legacy/demo publish path. Not part of the current B2B product promise."""
     from orchestrator import config, db
     from orchestrator.adapters import v2
     from orchestrator.diagnostics import write_diagnostic
     from orchestrator.state import InvalidTransitionError
+
+    console.print(
+        "[yellow]Legacy demo path:[/yellow] live MoneyPrinter render/publish tooling has moved to "
+        "/home/kyle/attention-media-lab. Profusion keeps this only for sanitized demo compatibility."
+    )
 
     _ensure_db()
     item = _resolve_item(item_id)

@@ -2,7 +2,7 @@
 
 ## 2026-05-17 Project Boundary
 
-Profusion's active architecture is workflow trust and evidence receipts. MoneyPrinterTurbo and MoneyPrinterV2 have moved to `/home/kyle/attention-media-lab` as education/content tooling. Existing Profusion render/publish code is legacy/demo infrastructure until a later cleanup removes or replaces it with fixture-backed demo receipts.
+Profusion's active architecture is workflow trust and evidence receipts. MoneyPrinterTurbo and MoneyPrinterV2 have moved to `/home/kyle/attention-media-lab` as education/content tooling. Existing Profusion render/publish code is legacy/demo infrastructure until a later cleanup removes or replaces it with fixture-backed demo receipts. The Profusion vendor submodules remain temporarily for sanitized legacy/demo compatibility; removal is deferred until fixture-backed demo receipts replace live render/publish.
 
 ## Layer Diagram
 
@@ -50,7 +50,9 @@ Profusion's active architecture is workflow trust and evidence receipts. MoneyPr
 
 Historical render/publish adapters and generated media artifacts remain legacy
 demo infrastructure only. MoneyPrinterTurbo and MoneyPrinterV2 have moved to
-`/home/kyle/attention-media-lab` as education/content tooling.
+`/home/kyle/attention-media-lab` as education/content tooling. Their vendor
+submodules remain temporarily for legacy/demo compatibility and should be
+removed only after fixture-backed demo receipts replace live render/publish.
 
 ## Data Flow (happy path)
 
