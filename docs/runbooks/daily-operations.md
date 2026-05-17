@@ -21,6 +21,11 @@ latest artifacts and jobs, blockage, retryability, and the next safe command.
 
 ## Normal Pipeline
 
+Split-era warning: `render`, `publish`, and `publish-due` are legacy/demo media
+paths retained only for sanitized demo compatibility. MoneyPrinterTurbo/V2 live
+tooling moved to `/home/kyle/attention-media-lab`; these commands are not part
+of the current B2B product promise.
+
 ```bash
 uv run profusion ingest --topic "..."
 uv run profusion plan --item-id <id>

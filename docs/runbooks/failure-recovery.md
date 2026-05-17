@@ -13,6 +13,11 @@ history and expose the next safe command.
 
 ## Publish Job Failed
 
+Split-era warning: `render`, `publish`, and `publish-due` are legacy/demo media
+paths retained only for sanitized demo compatibility. MoneyPrinterTurbo/V2 live
+tooling moved to `/home/kyle/attention-media-lab`; these commands are not part
+of the current B2B product promise.
+
 ```bash
 uv run profusion jobs --item-id <id>
 uv run profusion retry --job-id <publish-job-id>
