@@ -22,95 +22,77 @@ Profusion's active architecture is workflow trust and evidence receipts. MoneyPr
 │  ├── read_models.py  — inspection/JSON dashboard contracts   │
 │  ├── retry.py        — conservative retry orchestration      │
 │  ├── diagnostics.py  — redacted failure logs + metadata      │
-│  ├── measurements.py — file-first M8 observations/comparisons│
-│  ├── substack_publish.py — historical demo package helper    │
+│  ├── measurements.py — file-first workflow observations      │
 │  ├── config.py       — .env loader                          │
 │  └── adapters/                                               │
 │      ├── claude.py   — Anthropic SDK (LLM, all gen work)    │
-│      ├── turbo.py    — MoneyPrinterTurbo adapter (M2)       │
-│      ├── v2.py       — MoneyPrinterV2 adapter (M4)         │
-│      ├── substack.py — historical demo adapter              │
 │      └── firecrawl.py— Firecrawl ingest adapter (M1)       │
-└──────────┬───────────────────────────┬───────────────────────┘
-           │ render(script, profile)   │ publish(video, metadata)
-┌──────────▼──────────┐  ┌────────────▼──────────────────────┐
-│  MoneyPrinterTurbo  │  │         MoneyPrinterV2             │
-│  vendor/...Turbo/   │  │       vendor/...V2/                │
-│                     │  │                                    │
-│  • script → video   │  │  • YouTube Shorts upload           │
-│  • Edge-TTS voice   │  │  • scheduler/cron                  │
-│  • subtitles        │  │  • optional Post Bridge            │
-│  • background music │  │    (TikTok, Instagram)             │
-│  • NVENC encoding   │  │                                    │
-└──────────┬──────────┘  └────────────┬──────────────────────┘
-           │                          │
-┌──────────▼──────────────────────────▼──────────────────────┐
-│                     Storage Layer                            │
+└──────────┬──────────────────────────────────────────────────┘
+           │ workflow state, evidence, receipts, observations
+┌──────────▼──────────────────────────────────────────────────┐
+│                     Evidence Storage Layer                    │
 │  data/                                                       │
 │  ├── content.db      — SQLite: all pipeline state           │
-│  ├── renders/        — MP4 artifacts + manifests            │
-│  ├── scripts/        — script text files                    │
-│  ├── topics/         — raw topic intake files               │
+│  ├── evidence/       — reviewer-facing evidence artifacts   │
+│  ├── receipts/       — file-first receipt packets           │
 │  ├── approvals/      — approval records                     │
-│  ├── publish_logs/   — per-publish-job logs                 │
 │  ├── measurements/   — file-first M8 measurement observations│
-│  ├── substack/       — historical demo package artifacts     │
 │  └── logs/           — agent action + failure logs          │
 └────────────────────────────────────────────────────────────┘
+           │ read models / API contracts
+┌──────────▼──────────────────────────────────────────────────┐
+│                 Internal Operator Cockpit                    │
+│  apps/operator-cockpit/                                      │
+│  • queue, item detail, jobs, artifacts, receipts, handoff    │
+│  • safe retry only; approval/publish remain command-gated    │
+└────────────────────────────────────────────────────────────┘
 ```
+
+Historical render/publish adapters and generated media artifacts remain legacy
+demo infrastructure only. MoneyPrinterTurbo and MoneyPrinterV2 have moved to
+`/home/kyle/attention-media-lab` as education/content tooling.
 
 ## Data Flow (happy path)
 
 ```
-1. operator: profusion ingest --topic "..."
-   → content_items row created (status: idea)
+1. operator defines a workflow and evidence boundary
+   → source context, scope, limitations, and expected review gates recorded
 
-2. profusion plan
-   → claude.generate() → content brief
-   → content_briefs row created (status: planned)
+2. Profusion preserves workflow artifacts
+   → artifacts, logs, approvals, and handoff context stay inspectable
 
-3. profusion render
-   → claude.generate() → scripts
-   → script_variants rows created (status: scripted)
-   → turbo.render(script) → MP4 artifact
-   → render_jobs row (status: rendered)
+3. human review gates are applied
+   → reviewer decision and limitation language are attached to the workflow
 
-4. profusion qa
-   → technical + editorial checks
-   → status: qa_passed or qa_failed
+4. receipt draft is generated
+   → reviewer-readable evidence packet explains what happened and what was not proven
 
-5. profusion approve
-   → approval_records row
-   → status: approved
+5. receipt lifecycle is reviewed separately from work approval
+   → draft → reviewed → approved_for_packet → delivered
 
-6. profusion schedule
-   → publish_jobs row scheduled
-   → status: scheduled
+6. API/read models expose operator state
+   → cockpit reads queue, item detail, artifacts, receipts, logs, and handoff
 
-7. profusion publish
-   → v2.publish(video, metadata)
-   → status: published, URL stored
-
-8. M6 operator hardening
-   → inspect / jobs / renders / approvals / handoff / retry
+7. M6/M7 operator hardening
+   → inspect / jobs / artifacts / approvals / handoff / retry
    → stable JSON contracts for the internal operator cockpit
 
-9. M8 workflow outcome observations
+8. M8 workflow outcome observations
    → manual/file-first observation captured with generic comparison dimensions
    → status: measured → archived
 ```
 
-Substack package and readback helpers are historical demo infrastructure after
-the 2026-05-17 split. Real Substack and education/content operations now belong
-to `/home/kyle/attention-media-lab`.
+Media/content flows may remain only as sanitized demo workflows for explaining
+receipt mechanics. Real education/content operations now belong to
+`/home/kyle/attention-media-lab`.
 
 ## Adapter Boundaries
 
-Adapters are the only place orchestrator code touches vendor repos.
-All adapters expose a minimal typed interface. Neither Turbo nor V2
-internals are imported directly outside their adapter module.
-
-This means either vendor can be replaced by editing one file.
+Adapters are the only place orchestrator code touches external services.
+All adapters expose a minimal typed interface. Legacy render/publish adapters
+are demo infrastructure after the split; active product architecture should
+center workflow state, evidence boundaries, receipts, read models, and the
+operator cockpit.
 
 ## Key Design Decisions
 

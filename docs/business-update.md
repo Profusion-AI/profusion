@@ -17,17 +17,16 @@ and a reviewer-readable receipt.
 Profusion is past the foundation phase and is now in the transition from an
 internal MVP to a paid-pilot-ready workflow.
 
-M0-M6 established the operating core: a local pipeline that can ingest ideas,
-generate structured creative work, render media, apply QA and approval gates,
-publish or schedule approved output, and recover from failures with inspectable
-state. This is the internal machinery that makes Profusion operable.
+M0-M6 established the operating core: local workflow state, artifact capture,
+QA and approval gates, recovery paths, and inspectable handoff context. After
+the project split, legacy media render/publish paths are demo infrastructure,
+not Profusion's active product promise.
 
-M7 is the current clarification point. It should be treated as the internal
-Profusion operator dashboard, not as a B2B customer portal. Its purpose is to
-help Profusion run the system reliably, inspect state, recover from failures,
-and produce pilot evidence. The B2B customer-facing experience should come
-later as a narrower reviewer-facing output first, then eventually as a customer
-admin portal if buyer demand proves it is worth building.
+M7 is locked and shipped as the internal operator cockpit. The cockpit lives in
+`apps/operator-cockpit/`; the public `dashboard/` Netlify site remains a
+separate public website. The B2B-facing experience is a narrower
+reviewer-readable evidence receipt first, then eventually a customer admin
+portal if buyer demand proves it is worth building.
 
 ## What M0-M6 Established
 
@@ -55,31 +54,39 @@ creative planning assets in a repeatable workflow.
 
 ### M2: Rendering
 
-M2 connected selected script variants to local video rendering through the
-MoneyPrinterTurbo integration and stored local render artifacts.
+Historical context: M2 connected selected script variants to local video
+rendering through the MoneyPrinterTurbo integration and stored local render
+artifacts.
 
-Business meaning: Profusion can move from planning into generated media output.
+Business meaning after the split: this can remain only as sanitized demo
+infrastructure for explaining receipt mechanics. MoneyPrinterTurbo now belongs
+to Attention Media Lab as education/content tooling.
 
 ### M3: QA and Approval Gates
 
-M3 added post-render QA and human approval before any publishing step.
+M3 added artifact QA and human approval before any external delivery or demo
+step.
 
 Business meaning: the system protects reputation and operator judgment. It does
 not blindly publish generated content.
 
 ### M4: Publishing
 
-M4 added approval-gated publishing through MoneyPrinterV2/PostBridge.
+Historical context: M4 added approval-gated publishing through
+MoneyPrinterV2/PostBridge.
 
-Business meaning: approved work can leave the local system and move toward
-distribution through a controlled publishing adapter.
+Business meaning after the split: distribution adapters are not active
+Profusion product architecture. MoneyPrinterV2 now belongs to Attention Media
+Lab as education/content tooling.
 
 ### M5: Scheduling and Cross-Posting
 
-M5 added scheduled publishing and multiple target coordination.
+Historical context: M5 added scheduled publishing and multiple target
+coordination.
 
-Business meaning: Profusion can coordinate planned distribution instead of only
-immediate one-off posting.
+Business meaning after the split: scheduling logic is legacy/demo context
+unless it supports a sanitized receipt example. Active Profusion value is
+workflow accountability, not distribution automation.
 
 ### M6: Agent Hardening and Operational Durability
 
@@ -94,16 +101,16 @@ database.
 
 ## Current M7 Reality
 
-M7 was intended to be the local operator dashboard. The dashboard/API work
-landed in the repo, but the visible `dashboard/` Vite entrypoint was later
-repurposed for the public Profusion AI website deployed to Netlify.
+M7 is locked and shipped as the internal operator cockpit. The cockpit lives at
+`apps/operator-cockpit/`. The public `dashboard/` Vite app remains the public
+Profusion AI website and is not the operator cockpit.
 
 The important business interpretation is:
 
-- M7 is not "not started."
+- M7 is complete and locked.
 - M7 is not the public website.
 - M7 is not the eventual B2B customer portal.
-- M7 is an internal operator cockpit that now needs a clean surface boundary.
+- M7 is an internal operator cockpit with a clean surface boundary.
 
 M7 now has a clean standalone source-of-truth trail:
 
@@ -112,13 +119,12 @@ M7 now has a clean standalone source-of-truth trail:
 - `docs/milestones/M7_OPERATOR_COCKPIT_CLOSEOUT_2026-05-03.md`
 - `docs/milestones/M7_OPERATOR_COCKPIT_FINAL_CLOSEOUT_2026-05-06.md`
 
-The old issue was that intent was spread across the M6 readiness note,
-directional spec, decisions log, API tests, and status reconciliation. That is
-now resolved for M7.
+The old surface-boundary ambiguity is resolved for M7: operator cockpit in
+`apps/operator-cockpit/`, public website in `dashboard/`.
 
 ## What M7 Should Provide
 
-M7 should provide an internal Profusion operator dashboard.
+M7 provides an internal Profusion operator cockpit.
 
 Primary user: the operator of Profusion AI.
 
@@ -131,7 +137,7 @@ Near-term operators:
 Primary job: help Profusion run the workflow reliably enough to support demos,
 paid pilots, and evidence generation.
 
-M7 should provide:
+M7 provides:
 
 - Queue visibility: what work exists and what stage each item is in.
 - Item detail: lifecycle state, artifacts, jobs, approvals, blockage, recent
@@ -156,9 +162,10 @@ It includes:
 
 - CLI and orchestration layer
 - Local state machine and database
-- Render, QA, approval, publish, schedule, retry, and diagnostic paths
-- Operator dashboard
-- Trust-session tooling and evidence production
+- Artifact capture, QA, approval, receipt, retry, and diagnostic paths
+- Operator cockpit
+- Evidence boundary, receipt, and outcome-observation tooling
+- Optional sanitized media/content demo workflow for receipt examples
 
 Audience: Profusion operators.
 
@@ -171,19 +178,20 @@ reviewer-readable evidence package.
 
 It should include:
 
-- Session summary
-- Declared mode
-- Policy decision
-- Watermark or disclosure state
-- Outcome
-- Receipt or audit artifact
-- Plain-English explanation of what the system did and did not prove
+- Workflow summary.
+- Evidence boundary.
+- Captured artifacts.
+- Human review gates and decisions.
+- Stated limitations.
+- Outcome observations.
+- Receipt or audit artifact.
+- Plain-English explanation of what the system did and did not prove.
 
-Audience: pilot buyer, reviewer, evaluator, compliance stakeholder, hiring or
-security lead.
+Audience: pilot buyer, reviewer, evaluator, operator, compliance stakeholder,
+or security lead.
 
-Goal: help the buyer understand and evaluate the governed video-session
-workflow without needing to operate Profusion.
+Goal: help the buyer understand and evaluate an AI-assisted workflow without
+needing to operate Profusion.
 
 ### Future B2B Customer Portal
 
@@ -210,19 +218,17 @@ This is not the current MVP priority.
 
 ### M7: Internal Operator Cockpit
 
-Recommended definition:
+Locked definition:
 
-> M7 is the internal Profusion operator cockpit for reliably producing
+> M7 is the locked internal Profusion operator cockpit for reliably producing
 > pilot-grade workflow outputs and evidence.
 
-Closeout work:
+Closed surface boundary:
 
-- Decide where the operator dashboard lives now that `dashboard/` is the public
-  Netlify website.
-- Restore or separate the local operator dashboard entrypoint.
-- Browser-smoke the local operator dashboard against `profusion serve`.
-- Capture a clean M7 PRD/TTD that defines user journeys, non-goals, UX states,
-  technical contracts, and acceptance criteria.
+- Operator cockpit: `apps/operator-cockpit/`.
+- Public website: `dashboard/`.
+- Cockpit consumes API/read-model contracts and remains internal.
+- Public website remains separate from operator workflow state.
 
 ### M7.5 / PP1: Reviewer-Readable Pilot Evidence
 
@@ -232,11 +238,11 @@ Recommended definition:
 
 Deliverables:
 
-- A clean trust-session receipt format.
+- A clean workflow evidence receipt format.
 - A plain-English receipt summary.
 - A demo/pilot evidence packet.
-- Clear language around boundaries: declaration, policy, watermark, receipt,
-  and review, not detector-grade claims.
+- Clear language around evidence boundaries, captured artifacts, human review
+  gates, limitations, receipt lifecycle, and outcome observations.
 
 This is the first meaningful B2B-facing surface.
 
@@ -276,7 +282,7 @@ produce a credible, narrow paid-pilot workflow.
 
 The strongest current path is:
 
-1. Keep the internal operator dashboard focused on Profusion's ability to run
+1. Keep the internal operator cockpit focused on Profusion's ability to run
    and recover the system.
 2. Build reviewer-readable evidence for B2B buyers.
 3. Use that evidence to support a paid-pilot conversation.
@@ -285,7 +291,8 @@ The strongest current path is:
 
 The practical question for the next sprint is:
 
-> Can Profusion show a buyer a governed video-session workflow, produce a
-> readable receipt, and explain exactly what the system did and did not prove?
+> Can Profusion show a buyer an AI-assisted workflow with a clear evidence
+> boundary, produce a readable receipt, and explain exactly what the system did
+> and did not prove?
 
 That is the business bridge from internal MVP to B2B-facing product.
