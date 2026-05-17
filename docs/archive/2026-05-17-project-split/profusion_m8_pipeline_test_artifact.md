@@ -201,6 +201,10 @@ This receipt documents the declared Profusion workflow for a short-form content 
 
 ## 16. M8 measurement stub
 
+2026-05-08 implementation note: this stub now maps to
+`uv run profusion measure record`, file-first observations under
+`data/measurements/<item_id>/`, and the `published -> measured` transition.
+
 After publication or controlled test delivery, M8 should support manual measurement imports such as:
 
 ```yaml

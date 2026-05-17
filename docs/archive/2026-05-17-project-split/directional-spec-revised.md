@@ -305,7 +305,7 @@ M2 is the moment Profusion becomes an artifact-producing system.
 
 ### M3: QA and Approval Gates
 
-Status: Planned.
+Status: First slice started on 2026-05-08.
 
 Goal: prevent rendered content from advancing without quality and editorial
 review.
@@ -428,7 +428,9 @@ Goal: close the loop between published output and future editorial decisions.
 Expected deliverables:
 
 - implement `profusion measure` or equivalent reporting workflow
+  - first slice: `uv run profusion measure record/list/summary`
 - store basic performance outcomes and publication metadata summaries
+  - first slice: file-first observations under `data/measurements/`
 - compare hooks, formats, and editorial pillars over time
 - feed measured lessons back into planning without turning the system into a
   trend-chasing gimmick
