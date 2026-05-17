@@ -23,6 +23,7 @@ data/logs/*
 data/receipts/*
 !data/receipts/.gitkeep
 data/measurements/
+data/private/
 
 # OS
 .DS_Store

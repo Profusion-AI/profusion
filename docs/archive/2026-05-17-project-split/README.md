@@ -18,3 +18,5 @@ Archived documents are historical. Do not use them as current implementation gui
 - `profusion-m75-m8-workflow-receipt-simulator-handoff.md`
 - `profusion-m775-implementation-alignment-addendum-2026-05-06.md`
 - `profusion_m8_pipeline_test_artifact.md`
+- `STATUS_with_substack_spike_2026-05-17.md`
+- `ROADMAP_with_substack_spike_2026-05-17.md`

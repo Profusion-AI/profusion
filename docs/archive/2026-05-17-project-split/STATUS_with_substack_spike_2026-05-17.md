@@ -180,11 +180,65 @@ cockpit read models.
 - No public website changes.
 - No education/content-channel ownership inside Profusion.
 
-**Archived Substack spike context:** The earlier Substack publishing and
-education-channel proof path is no longer an active Profusion implementation
-path. It has been preserved in
-`docs/archive/2026-05-17-project-split/STATUS_with_substack_spike_2026-05-17.md`
-and operational ownership moved to `/home/kyle/attention-media-lab`.
+**Historical/sanitized demo context: Substack publishing + evidence loop**
+
+This earlier M8 proof path is now historical context or a sanitized demo
+receipt source:
+
+```text
+Profusion content item -> Substack-ready package -> human approval ->
+published Substack post -> RSS readback verification -> receipt/evidence
+packet -> manual M8 measurement observation
+```
+
+Implemented safe first slice:
+
+- `src/orchestrator/adapters/substack.py` defines typed Substack adapter
+  primitives for manual package artifacts and public RSS readback.
+- `src/orchestrator/substack_publish.py` prepares file-first Substack package
+  artifacts under `data/substack/<item_id>/`.
+- `uv run profusion substack package --item-id <id> --json` writes
+  `draft.md`, `draft.html`, `metadata.json`, `approval_snapshot.json`,
+  `limitations.md`, and `publish_attempts.json`.
+- `uv run profusion substack draft --item-id <id> --mode manual --json`
+  reuses an existing package when present, instead of overwriting operator
+  metadata.
+- `uv run profusion substack import-article --draft-path <path> --title <title> --approved-by <operator> --confirm-content-approval --json`
+  gives the operator a governed manual path from a human-approved local
+  long-form draft to an approved, package-ready Profusion content item without
+  editing SQLite by hand.
+- `uv run profusion substack publish --item-id <id> --url <published_url> --confirm-publish --json`
+  requires an existing package, records that a human intentionally published
+  the prepared post, and stores the Substack URL in the existing publish-job
+  ledger.
+- `uv run profusion substack verify --item-id <id> --url <published_url> --method rss --json`
+  requires that the same URL was recorded first, writes public RSS readback
+  evidence to `data/substack/<item_id>/verification_rss.json`, and fails if the
+  URL is not present in the feed.
+
+Deferred until the manual path proves useful:
+
+- browser automation for draft creation
+- browser automation for publishing
+- Stackhooks structured readback
+- MCP wrapper tools around the Profusion CLI
+- automated platform analytics import or optimization
+
+M8.1 voice/manual publication run artifacts existed locally before the split
+and now belong to `/home/kyle/attention-media-lab` if used operationally:
+
+- Source PDF text extraction:
+  `data/source_packs/profusion_substack_voice/ai_speed_is_not_enough_work_has_to_become_reviewable.md`
+- Source pack note:
+  `data/source_packs/profusion_substack_voice/README.md`
+- Voice guide:
+  `data/style/profusion_substack_voice_2026-05-08.md`
+- Draft for human review:
+  `data/drafts/profusion_substack_voice/human_in_the_loop_is_not_enough.md`
+
+This draft has not been treated as live-publish approved yet. The next operator
+gate is Kyle review, then `substack import-article`, then the existing package
+-> manual publish -> URL record -> RSS verify -> receipt -> measurement loop.
 
 **Earlier M8 measurement/cockpit verification baseline:**
 - `uv run pytest`: 189 passed
@@ -196,6 +250,16 @@ and operational ownership moved to `/home/kyle/attention-media-lab`.
 - `cd dashboard && corepack pnpm lint`: passed
 - `cd dashboard && corepack pnpm build`: passed
 - `git diff --check`: passed
+
+**Substack spike QC verification:**
+- `uv run pytest tests/test_substack_publish.py -q`: 17 passed
+- `uv run pytest tests/test_substack_publish.py tests/test_receipts.py tests/test_measurements.py -q`: 31 passed
+- `uv run pytest -q`: 206 passed
+- `uv run profusion smoke --offline`: passed
+- `git diff --check`: passed
+
+The full baseline still needs to be rerun after the first real Substack
+operator scenario before M8 is treated as closed.
 
 **M8 remains open until:**
 - at least three manual measurement observations exist

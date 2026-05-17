@@ -152,17 +152,56 @@ Current M8 constraints:
 Later M8 hardening can add stronger operator guidance and controlled imports
 after manual comparison records prove useful.
 
-### Archived Substack Spike
+### Historical/Sanitized Demo: Substack Publishing + Evidence Loop Spike
 
-The earlier Substack publishing and education-channel proof path is no longer
-an active Profusion implementation path. It has been preserved in
-`docs/archive/2026-05-17-project-split/ROADMAP_with_substack_spike_2026-05-17.md`
-and operational ownership moved to `/home/kyle/attention-media-lab`.
+Status: safe first slice implemented on 2026-05-08.
 
-Profusion may retain sanitized content/media demo fixtures only to explain
-receipt mechanics. It should not restore Substack-specific commands, package
-helpers, RSS verification, source packs, voice guides, or owned-media drafts in
-this repo unless the split is explicitly reopened.
+This earlier spike is historical context or a sanitized receipt-demo source
+after the split. Real Substack and education/content operations now belong to
+`/home/kyle/attention-media-lab`.
+
+```text
+approved Profusion item -> Substack-ready package -> human publication ->
+Substack URL record -> RSS readback -> receipt packet -> manual measurement
+```
+
+Implemented first slice:
+
+- `src/orchestrator/adapters/substack.py`
+- `src/orchestrator/substack_publish.py`
+- `uv run profusion substack package --item-id <id> --json`
+- `uv run profusion substack import-article --draft-path <path> --title <title> --approved-by <operator> --confirm-content-approval --json`
+  imports a human-approved local long-form draft as an approved package-ready
+  item without SQLite hand-editing
+- `uv run profusion substack draft --item-id <id> --mode manual --json`
+  reuses an existing manual package when present
+- `uv run profusion substack publish --item-id <id> --url <published_url> --confirm-publish --json`
+  requires an existing manual package
+- `uv run profusion substack verify --item-id <id> --url <published_url> --method rss --json`
+  requires a matching recorded publication URL and fails if the URL is absent
+  from RSS
+- publication artifacts under `data/substack/<item_id>/`
+- receipt evidence now carries publish job platform, URL, external id, and
+  publish timestamp when present
+
+M8.1 voice run:
+
+- Existing Substack article extracted locally as a source voice sample.
+- v0 Profusion Substack voice guide written under `data/style/`.
+- Follow-on draft written under `data/drafts/` for human review.
+- `substack import-article` creates an approved package-ready item only after
+  `--confirm-content-approval`; the draft has not yet been imported or
+  published.
+
+Boundary:
+
+- no public website changes
+- no hidden Substack write endpoints
+- no authenticated Substack dashboard scraping
+- no stored browser cookies or sessions
+- no automated email/app inbox send
+- no Stackhooks or analytics import in the first slice
+- no MCP wrapper until the project CLI is the durable source of truth
 
 ## Deferred Surfaces
 
@@ -208,6 +247,17 @@ Observed results:
 - `cd dashboard && corepack pnpm lint`: passed
 - `cd dashboard && corepack pnpm build`: passed
 - `git diff --check`: passed
+
+Substack spike QC verification:
+
+- `uv run pytest tests/test_substack_publish.py -q`: 17 passed
+- `uv run pytest tests/test_substack_publish.py tests/test_receipts.py tests/test_measurements.py -q`: 31 passed
+- `uv run pytest -q`: 206 passed
+- `uv run profusion smoke --offline`: passed
+- `git diff --check`: passed
+
+The full verification baseline should be rerun after the first real Substack
+operator scenario before M8 is closed.
 
 Latest M7 lock verification on 2026-05-06:
 
