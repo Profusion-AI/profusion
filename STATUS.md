@@ -162,11 +162,14 @@ cockpit read models.
   `GET /api/measurements/summary` expose the same read models to the cockpit.
 - The standalone operator cockpit now has `/measurements` visibility and item
   measurement facts, with static snapshot export support.
-- Manual observations can carry generic comparison dimensions for `hook_variant`,
-  `content_format`, and `editorial_pillar`.
-- Measurement summaries now aggregate comparison rows across hook variants,
-  content formats, and editorial pillars without adding platform imports or
+- Manual observations can carry generic comparison dimensions for
+  `scenario_variant`, `workflow_type`, and `trust_domain`.
+- Measurement summaries now aggregate comparison rows across scenario variants,
+  workflow types, and trust domains without adding platform imports or
   optimization logic.
+- Compatibility note: older stored JSON/read-model keys may still appear as
+  `hook_variant`, `content_format`, and `editorial_pillar`, but current
+  operator language is scenario variant, workflow type, and trust domain.
 
 **Current M8 boundary after the split:**
 - Manual/file-first observations only.
