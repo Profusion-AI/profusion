@@ -1773,11 +1773,16 @@ def publish_due(
     ),
     limit: int = typer.Option(100, "--limit", min=1),
 ) -> None:
-    """Publish scheduled jobs whose scheduled time has arrived."""
+    """Legacy/demo scheduled publish path. Not part of the current B2B product promise."""
     from orchestrator import config, db
     from orchestrator.adapters import v2
     from orchestrator.diagnostics import write_diagnostic
     from orchestrator.state import InvalidTransitionError
+
+    console.print(
+        "[yellow]Legacy demo path:[/yellow] live MoneyPrinter render/publish tooling has moved to "
+        "/home/kyle/attention-media-lab. Profusion keeps this only for sanitized demo compatibility."
+    )
 
     _ensure_db()
     if now:
