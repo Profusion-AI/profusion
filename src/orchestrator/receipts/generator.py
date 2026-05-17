@@ -288,7 +288,11 @@ def _job_summary(job: dict[str, Any] | None) -> dict[str, Any] | None:
         return None
     return {
         "id": job.get("id"),
+        "platform": job.get("platform"),
         "status": job.get("status"),
+        "published_url": job.get("published_url"),
+        "external_post_id": job.get("external_post_id"),
+        "published_at": job.get("published_at"),
         "created_at": job.get("created_at"),
         "updated_at": job.get("updated_at"),
     }

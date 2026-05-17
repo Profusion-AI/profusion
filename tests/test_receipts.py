@@ -7,7 +7,13 @@ import pytest
 from typer.testing import CliRunner
 
 from orchestrator.cli import app
-from orchestrator.db import init_db, insert_content_item, update_item_status
+from orchestrator.db import (
+    init_db,
+    insert_content_item,
+    insert_publish_job,
+    record_publish_complete,
+    update_item_status,
+)
 from orchestrator.receipts.generator import (
     ReceiptEligibilityError,
     ReceiptTransitionError,
@@ -64,6 +70,41 @@ def test_content_video_receipt_packet_from_approved_item(monkeypatch, tmp_path):
     assert evidence["workflow"]["content_approval"]["decision"] == "approved"
     assert evidence["artifacts"]["mp4_exists"] is True
     assert evidence["artifacts"]["qa_report_exists"] is True
+
+
+def test_content_video_receipt_preserves_publish_metadata(monkeypatch, tmp_path):
+    db_path = _use_receipt_tmp(monkeypatch, tmp_path)
+    init_db(db_path)
+    item_id, _, _ = _seed_approved_item(db_path, tmp_path)
+    job_id = insert_publish_job(
+        db_path,
+        content_item_id=item_id,
+        platform="youtube_shorts",
+        title="Evidence demo",
+    )
+    record_publish_complete(
+        db_path,
+        content_item_id=item_id,
+        job_id=job_id,
+        published_url="https://example.com/demo",
+        external_post_id="external-123",
+    )
+
+    receipt = generate_content_video_receipt(
+        db_path=db_path,
+        logs_dir=tmp_path / "logs",
+        receipts_dir=tmp_path / "receipts",
+        item_id=item_id,
+    )
+
+    evidence = json.loads(receipt.evidence_json.read_text(encoding="utf-8"))
+    latest_publish = evidence["workflow"]["latest_publish_job"]
+    assert latest_publish["id"] == job_id
+    assert latest_publish["platform"] == "youtube_shorts"
+    assert latest_publish["status"] == "completed"
+    assert latest_publish["published_url"] == "https://example.com/demo"
+    assert latest_publish["external_post_id"] == "external-123"
+    assert latest_publish["published_at"]
 
 
 def test_content_video_receipt_refuses_pre_qa_item(monkeypatch, tmp_path):

@@ -44,5 +44,8 @@ DB_PATH: Path = Path(get("DB_PATH", "data/content.db") or "data/content.db")
 RENDERS_DIR: Path = Path(get("RENDERS_DIR", "data/renders") or "data/renders")
 LOGS_DIR: Path = Path(get("LOGS_DIR", "data/logs") or "data/logs")
 RECEIPTS_DIR: Path = Path(get("RECEIPTS_DIR", "data/receipts") or "data/receipts")
+MEASUREMENTS_DIR: Path = Path(
+    get("MEASUREMENTS_DIR", "data/measurements") or "data/measurements"
+)
 TURBO_URL: str = get("TURBO_URL", "http://localhost:8080") or "http://localhost:8080"
 POST_BRIDGE_API_KEY: str = get("POST_BRIDGE_API_KEY", "") or ""
