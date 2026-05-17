@@ -239,7 +239,73 @@ def test_measurement_summary_compares_manual_workflow_dimensions(monkeypatch, tm
     assert summary["comparisons"]["editorial_pillars"][0]["display_label"] == "Trust Domain"
 
 
-def test_measure_record_cli_accepts_manual_comparison_dimensions(monkeypatch, tmp_path):
+def test_measure_record_cli_accepts_generic_workflow_dimension_aliases(monkeypatch, tmp_path):
+    db_path = _use_measurement_tmp(monkeypatch, tmp_path)
+    init_db(db_path)
+    item_id = _seed_published_item(db_path, tmp_path)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "measure",
+            "record",
+            "--item-id",
+            item_id,
+            "--platform",
+            "internal_demo",
+            "--observation-type",
+            "reviewer_feedback",
+            "--scenario-variant",
+            "receipt_boundary_open",
+            "--workflow-type",
+            "demo_packet",
+            "--trust-domain",
+            "media_trust",
+            "--recorded-by",
+            "Kyle",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["dimensions"] == {
+        "hook_variant": "receipt_boundary_open",
+        "content_format": "demo_packet",
+        "editorial_pillar": "media_trust",
+    }
+    assert payload["display_dimensions"] == {
+        "scenario_variant": "receipt_boundary_open",
+        "workflow_type": "demo_packet",
+        "trust_domain": "media_trust",
+    }
+
+
+def test_profusion_help_does_not_register_substack_command():
+    result = CliRunner().invoke(app, ["--help"])
+
+    assert result.exit_code == 0
+    assert "substack" not in result.output.lower()
+    assert "educational media engine" not in result.output
+    assert "workflow trust" in result.output.lower()
+    assert "evidence receipt" in result.output.lower()
+
+
+def test_measure_record_help_prefers_generic_workflow_dimension_labels():
+    result = CliRunner().invoke(app, ["measure", "record", "--help"])
+
+    assert result.exit_code == 0
+    assert "--scenario-variant" in result.output
+    assert "--workflow-type" in result.output
+    assert "--trust-domain" in result.output
+    assert "Scenario variant" in result.output
+    assert "Workflow type" in result.output
+    assert "Trust domain" in result.output
+    assert "content format" not in result.output.lower()
+    assert "editorial pillar" not in result.output.lower()
+
+
+def test_measure_record_cli_keeps_legacy_dimension_flags_hidden_but_accepted(monkeypatch, tmp_path):
     db_path = _use_measurement_tmp(monkeypatch, tmp_path)
     init_db(db_path)
     item_id = _seed_published_item(db_path, tmp_path)
@@ -269,23 +335,11 @@ def test_measure_record_cli_accepts_manual_comparison_dimensions(monkeypatch, tm
 
     assert result.exit_code == 0
     payload = json.loads(result.output)
-    assert payload["dimensions"] == {
-        "hook_variant": "receipt_boundary_open",
-        "content_format": "demo_packet",
-        "editorial_pillar": "media_trust",
-    }
     assert payload["display_dimensions"] == {
         "scenario_variant": "receipt_boundary_open",
         "workflow_type": "demo_packet",
         "trust_domain": "media_trust",
     }
-
-
-def test_profusion_help_does_not_register_substack_command():
-    result = CliRunner().invoke(app, ["--help"])
-
-    assert result.exit_code == 0
-    assert "substack" not in result.output.lower()
 
 
 def test_measurement_api_routes(client_measurements):

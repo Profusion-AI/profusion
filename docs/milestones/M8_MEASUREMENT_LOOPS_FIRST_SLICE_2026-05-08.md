@@ -67,10 +67,6 @@ metrics:
   completion_rate: null | 0.0-1.0
   comments: null | integer
 dimensions:
-  hook_variant: null | string      # compatibility field; display as scenario variant
-  content_format: null | string    # compatibility field; display as workflow type
-  editorial_pillar: null | string  # compatibility field; display as trust domain
-display_dimensions:
   scenario_variant: null | string
   workflow_type: null | string
   trust_domain: null | string
@@ -80,6 +76,11 @@ recorded_at: ISO-8601 UTC timestamp
 ```
 
 This is an observation seed, not an automated growth loop.
+
+Compatibility note: existing JSON may still store these values under
+`dimensions.hook_variant`, `dimensions.content_format`, and
+`dimensions.editorial_pillar`. Operators should use the generic CLI labels
+`scenario_variant`, `workflow_type`, and `trust_domain`.
 
 ## Example Operator Record
 
@@ -97,9 +98,9 @@ uv run profusion measure record \
   --platform internal_demo \
   --observation-type reviewer_feedback \
   --recorded-by Kyle \
-  --hook-variant receipt_boundary_open \
-  --content-format demo_packet \
-  --editorial-pillar workflow_trust \
+  --scenario-variant receipt_boundary_open \
+  --workflow-type demo_packet \
+  --trust-domain workflow_trust \
   --qualitative-signal "Reviewer understood the evidence boundary but wanted a clearer approval handoff." \
   --json
 ```
@@ -108,9 +109,10 @@ uv run profusion measure record \
 
 The next implemented increment keeps the same boundary but makes the manual
 records useful for comparison. Operators can tag observations with
-`hook_variant`, `content_format`, and `editorial_pillar` compatibility fields
-that display as scenario variant, workflow type, and trust domain, then inspect grouped
-summary rows across those dimensions in CLI/API JSON and the cockpit.
+`scenario_variant`, `workflow_type`, and `trust_domain`, then inspect grouped
+summary rows across those dimensions in CLI/API JSON and the cockpit. The
+legacy storage keys remain a compatibility detail, not the operator-facing
+contract.
 
 M8 should not be closed merely because the software exists. It should be closed
 only after the manual loop has produced useful operator evidence.

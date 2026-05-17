@@ -17,7 +17,7 @@ from rich.table import Table
 
 app = typer.Typer(
     name="profusion",
-    help="Profusion Content Pipeline — semi-autonomous educational media engine.",
+    help="Profusion B2B workflow trust and evidence receipt operator system.",
     no_args_is_help=True,
 )
 receipt_app = typer.Typer(help="Generate and inspect reviewer evidence receipts.")
@@ -650,21 +650,24 @@ def measure_record(
         help="Manual workflow completion rate from 0 to 1, when relevant.",
     ),
     comments: int | None = typer.Option(None, "--comments", min=0, help="Manual feedback/comment count."),
-    hook_variant: str | None = typer.Option(
+    scenario_variant: str | None = typer.Option(
         None,
-        "--hook-variant",
-        help="Compatibility field for the scenario variant label.",
+        "--scenario-variant",
+        help="Scenario variant label.",
     ),
-    content_format: str | None = typer.Option(
+    workflow_type: str | None = typer.Option(
         None,
-        "--content-format",
-        help="Compatibility field for the workflow type label.",
+        "--workflow-type",
+        help="Workflow type label.",
     ),
-    editorial_pillar: str | None = typer.Option(
+    trust_domain: str | None = typer.Option(
         None,
-        "--editorial-pillar",
-        help="Compatibility field for the trust domain label.",
+        "--trust-domain",
+        help="Trust domain label.",
     ),
+    legacy_hook_variant: str | None = typer.Option(None, "--hook-variant", hidden=True),
+    legacy_content_format: str | None = typer.Option(None, "--content-format", hidden=True),
+    legacy_editorial_pillar: str | None = typer.Option(None, "--editorial-pillar", hidden=True),
     recorded_at: str | None = typer.Option(
         None,
         "--recorded-at",
@@ -694,9 +697,9 @@ def measure_record(
             views=views,
             completion_rate=completion_rate,
             comments=comments,
-            hook_variant=hook_variant,
-            content_format=content_format,
-            editorial_pillar=editorial_pillar,
+            hook_variant=scenario_variant or legacy_hook_variant,
+            content_format=workflow_type or legacy_content_format,
+            editorial_pillar=trust_domain or legacy_editorial_pillar,
             recorded_at=recorded_at,
         )
     except (MeasurementEligibilityError, MeasurementValidationError) as e:
