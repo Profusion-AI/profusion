@@ -11,6 +11,13 @@
 This handoff has been partially executed and should be read as historical
 implementation context, not as a fresh start instruction.
 
+2026-05-08 update: M8 has now started as the canonical content measurement
+loop after explicit product-owner instruction. Use `STATUS.md`,
+`docs/ROADMAP.md`, and
+`docs/milestones/M8_MEASUREMENT_LOOPS_FIRST_SLICE_2026-05-08.md` for current
+M8 scope. M7.75 simulator guidance below remains useful historical context, but
+it is no longer a stop sign for M8.
+
 Current state:
 
 - M7 is locked and shipped in commit

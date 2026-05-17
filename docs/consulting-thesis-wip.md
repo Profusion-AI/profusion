@@ -1,3 +1,5 @@
+> 2026-05-17 split note: Profusion is now the B2B workflow-trust project. Education/content operations, MPT/V2 tooling, Substack publishing, source packs, voice guides, and owned-media drafts belong to `/home/kyle/attention-media-lab`. This document remains for historical or narrow implementation context only.
+
 An allegory on pushing Profusion.AI forward in Q2 2026. The following text contains a coherent, defensible thesis as to why Profusion will continue being a trailblazer for AI-mediated receipts.
 
 Kyle, I think the uncomfortable truth is this:
@@ -604,4 +606,3 @@ And when in doubt, remember this sentence:
 Your job in the conversation is not to convince them the future is coming.
 
 Your job is to find the place where the future is already causing them pain.
-

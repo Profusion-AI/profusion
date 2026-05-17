@@ -2,6 +2,14 @@
 
 Date: 2026-05-06
 
+## 2026-05-08 Status Update
+
+This addendum is preserved as historical M7.75 bridge guidance. M8 has now
+started as the canonical content measurement loop after explicit
+product-owner instruction. Use `STATUS.md`, `docs/ROADMAP.md`, and
+`docs/milestones/M8_MEASUREMENT_LOOPS_FIRST_SLICE_2026-05-08.md` for current
+M8 scope.
+
 ## Decision
 
 Proceed with M7.75 as a content-first Workflow Receipt Simulator and Pilot Operating Kit.

@@ -8,6 +8,12 @@ This review was written before the final M7 lock commit. It remains useful as a
 technical/business analysis of the M7-to-M8 boundary, but the closeout state has
 changed:
 
+2026-05-08 update: M8 has now started as the canonical content measurement
+loop after explicit product-owner instruction. Use `STATUS.md`,
+`docs/ROADMAP.md`, and
+`docs/milestones/M8_MEASUREMENT_LOOPS_FIRST_SLICE_2026-05-08.md` for current
+M8 scope.
+
 - M7 is now formally locked and shipped.
 - The broad dirty-worktree risk called out below was resolved by commit
   `f711908 M7 closeout: lock operator cockpit and receipt preview`.

@@ -1,5 +1,7 @@
 # M7.5 Reviewer Evidence Smoke
 
+> 2026-05-17 split note: Profusion is now the B2B workflow-trust project. Education/content operations, MPT/V2 tooling, Substack publishing, source packs, voice guides, and owned-media drafts belong to `/home/kyle/attention-media-lab`. This document remains for historical or narrow implementation context only.
+
 Date: 2026-05-03
 
 ## Current Status Update: 2026-05-07
@@ -9,8 +11,12 @@ verification. Since then, M7 has been formally locked in
 `docs/milestones/M7_OPERATOR_COCKPIT_FINAL_CLOSEOUT_2026-05-06.md`.
 
 The real demo receipt should remain `draft` unless Kyle explicitly reviews and
-advances it. M8 remains deferred; do not use the final paragraph of this smoke
-note as authorization to begin measurement loops.
+advances it.
+
+2026-05-08 update: M8 has now started from explicit product-owner instruction,
+not from this smoke note. Current M8 scope lives in `STATUS.md`,
+`docs/ROADMAP.md`, and
+`docs/milestones/M8_MEASUREMENT_LOOPS_FIRST_SLICE_2026-05-08.md`.
 
 ## Scope
 
