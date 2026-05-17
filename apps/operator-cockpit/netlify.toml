@@ -16,6 +16,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/measurements/summary"
+  to = "/api/measurements/summary.json"
+  status = 200
+
+[[redirects]]
   from = "/api/items/:id/jobs"
   to = "/api/items/:id/jobs.json"
   status = 200
@@ -33,6 +38,11 @@
 [[redirects]]
   from = "/api/items/:id/receipts"
   to = "/api/items/:id/receipts.json"
+  status = 200
+
+[[redirects]]
+  from = "/api/items/:id/measurements"
+  to = "/api/items/:id/measurements.json"
   status = 200
 
 [[redirects]]

@@ -28,6 +28,7 @@ mkdirSync(publicApiRoot, { recursive: true });
 const queue = profusionJson(["status"]);
 writeJson("queue.json", queue);
 writeJson("logs.json", profusionJson(["logs", "--limit", "50"]));
+writeJson("measurements/summary.json", profusionJson(["measure", "summary"]));
 
 for (const item of queue.items ?? []) {
   const itemId = item.id;
@@ -37,6 +38,7 @@ for (const item of queue.items ?? []) {
   writeJson(`items/${encoded}/renders.json`, profusionJson(["renders", "--item-id", itemId]));
   writeJson(`items/${encoded}/approvals.json`, profusionJson(["approvals", "--item-id", itemId]));
   writeJson(`items/${encoded}/receipts.json`, profusionJson(["receipt", "list", "--item-id", itemId]));
+  writeJson(`items/${encoded}/measurements.json`, profusionJson(["measure", "list", "--item-id", itemId]));
 }
 
 console.log(`Exported static cockpit API snapshot for ${(queue.items ?? []).length} item(s).`);

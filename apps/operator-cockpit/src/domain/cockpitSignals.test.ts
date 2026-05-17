@@ -13,12 +13,13 @@ describe("cockpit M7 contract signals", () => {
       { id: "two", status: "qa_failed" },
       { id: "three", status: "scheduled" },
       { id: "four", status: "published" },
+      { id: "five", status: "measured" },
     ];
 
     expect(getQueueHealth(items)).toEqual({
       active: 2,
       blockedOrFailed: 1,
-      publishedOrArchived: 1,
+      publishedOrArchived: 2,
     });
   });
 
@@ -33,6 +34,7 @@ describe("cockpit M7 contract signals", () => {
     const retry = getCommandPresentation("uv run profusion retry --render-job-id render_123");
     const receiptDraft = getCommandPresentation("uv run profusion receipt draft --item-id item_123");
     const receiptTransition = getCommandPresentation("uv run profusion receipt transition --receipt-id receipt_123 --to reviewed");
+    const measurement = getCommandPresentation("uv run profusion measure record --item-id item_123 --platform internal_demo --observation-type reviewer_feedback --recorded-by Kyle");
 
     expect(approve).toEqual({
       command: "uv run profusion approve --item-id item_123",
@@ -50,6 +52,8 @@ describe("cockpit M7 contract signals", () => {
     expect(receiptDraft.buttonLabel).toBe("Copy command");
     expect(receiptTransition.isMutation).toBe(true);
     expect(receiptTransition.buttonLabel).toBe("Copy command");
+    expect(measurement.isMutation).toBe(true);
+    expect(measurement.buttonLabel).toBe("Copy command");
   });
 
   it("presents receipt lifecycle status and the next terminal-only transition", () => {

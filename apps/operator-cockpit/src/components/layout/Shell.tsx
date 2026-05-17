@@ -1,6 +1,7 @@
 import { Outlet, NavLink } from "react-router-dom";
 import {
   AlertTriangle,
+  BarChart3,
   CheckCircle2,
   Cpu,
   FileArchive,
@@ -18,6 +19,7 @@ export default function Shell() {
     { to: "/failures", label: "Failures", icon: AlertTriangle },
     { to: "/approvals", label: "Approvals", icon: CheckCircle2 },
     { to: "/evidence", label: "Evidence", icon: FileArchive },
+    { to: "/measurements", label: "Outcome Observations", icon: BarChart3 },
     { to: "/logs", label: "Logs", icon: ScrollText },
     { to: "/system", label: "System", icon: Cpu },
   ];
@@ -45,6 +47,9 @@ export default function Shell() {
           <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.08em] text-[var(--cockpit-muted)]">
             <span className="rounded-full border border-[var(--cockpit-border)] px-2 py-1">
               M7 cockpit
+            </span>
+            <span className="rounded-full border border-[var(--cockpit-border)] px-2 py-1">
+              M8 outcome observations
             </span>
             <span className="rounded-full border border-[var(--cockpit-border)] px-2 py-1">
               read-only preview

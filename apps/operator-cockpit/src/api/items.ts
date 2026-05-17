@@ -87,6 +87,86 @@ export interface ReceiptsPayload {
   receipts: ReceiptSummary[];
 }
 
+export interface MeasurementObservation {
+  observation_id: string;
+  content_item_id: string;
+  platform: string;
+  observation_type: string;
+  recorded_by: string;
+  recorded_at: string;
+  created_at: string;
+  status_before: string;
+  status_after: string;
+  metrics: {
+    views: number | null;
+    completion_rate: number | null;
+    comments: number | null;
+  };
+  dimensions?: {
+    hook_variant: string | null;
+    content_format: string | null;
+    editorial_pillar: string | null;
+  };
+  display_dimensions?: {
+    scenario_variant: string | null;
+    workflow_type: string | null;
+    trust_domain: string | null;
+  };
+  display_labels?: Record<string, string>;
+  qualitative_signal: string | null;
+  observation_path: string;
+  [key: string]: unknown;
+}
+
+export interface MeasurementsPayload {
+  item_id: string;
+  measurement_count: number;
+  display_labels?: Record<string, string>;
+  latest_observation: MeasurementObservation | null;
+  observations: MeasurementObservation[];
+}
+
+export interface MeasurementSummaryPayload {
+  observation_count: number;
+  measured_item_count: number;
+  platforms: Array<{ platform: string; count: number }>;
+  observation_types: Array<{ observation_type: string; count: number }>;
+  display_labels?: Record<string, string>;
+  aggregate_metrics: {
+    views: number;
+    comments: number;
+    average_completion_rate: number | null;
+  };
+  comparisons: {
+    hook_variants: MeasurementComparison[];
+    content_formats: MeasurementComparison[];
+    editorial_pillars: MeasurementComparison[];
+  };
+  latest_observation: MeasurementObservation | null;
+  items: Array<{
+    item_id: string;
+    observation_count: number;
+    latest_observation: MeasurementObservation;
+    status: string | null;
+  }>;
+}
+
+export interface MeasurementComparison {
+  hook_variant?: string;
+  content_format?: string;
+  editorial_pillar?: string;
+  display_label?: string;
+  display_value?: string;
+  observation_count: number;
+  item_count: number;
+  aggregate_metrics: {
+    views: number;
+    comments: number;
+    average_completion_rate: number | null;
+  };
+  latest_observation: MeasurementObservation;
+}
+
 export const getItem = (id: string): Promise<ItemPayload> =>
   apiFetch<ItemPayload>(`/api/items/${encodeURIComponent(id)}`);
 
@@ -101,3 +181,9 @@ export const getItemApprovals = (id: string): Promise<ApprovalsPayload> =>
 
 export const getItemReceipts = (id: string): Promise<ReceiptsPayload> =>
   apiFetch<ReceiptsPayload>(`/api/items/${encodeURIComponent(id)}/receipts`);
+
+export const getItemMeasurements = (id: string): Promise<MeasurementsPayload> =>
+  apiFetch<MeasurementsPayload>(`/api/items/${encodeURIComponent(id)}/measurements`);
+
+export const getMeasurementSummary = (): Promise<MeasurementSummaryPayload> =>
+  apiFetch<MeasurementSummaryPayload>("/api/measurements/summary");

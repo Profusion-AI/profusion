@@ -11,6 +11,7 @@ const requiredRoutes = [
   "/failures",
   "/approvals",
   "/evidence",
+  "/measurements",
   "/logs",
   "/system",
 ];
@@ -25,6 +26,7 @@ function readJson(relativePath) {
 
 const queue = readJson("queue.json");
 readJson("logs.json");
+readJson("measurements/summary.json");
 
 for (const item of queue.items ?? []) {
   const encoded = encodeURIComponent(item.id);
@@ -33,6 +35,7 @@ for (const item of queue.items ?? []) {
   readJson(`items/${encoded}/renders.json`);
   readJson(`items/${encoded}/approvals.json`);
   readJson(`items/${encoded}/receipts.json`);
+  readJson(`items/${encoded}/measurements.json`);
 }
 
 const demo = (queue.items ?? []).find((item) => item.source === "m7.5-demo-receipt");
@@ -62,6 +65,11 @@ if (baseUrl) {
   if (remoteReceipts.receipt_count < 1) {
     throw new Error("remote receipt endpoint returned no demo receipts");
   }
+  const measurementsResponse = await fetch(new URL("/api/measurements/summary", baseUrl));
+  if (!measurementsResponse.ok) {
+    throw new Error(`measurement summary endpoint returned HTTP ${measurementsResponse.status}`);
+  }
+  await measurementsResponse.json();
 }
 
 console.log(

@@ -4,6 +4,7 @@ import {
   useItemJobs,
   useItemRenders,
   useItemApprovals,
+  useItemMeasurements,
 } from "../hooks/useItem";
 import LogsPanel from "../components/item/LogsPanel";
 import CockpitBadge from "../components/cockpit/CockpitBadge";
@@ -84,6 +85,7 @@ export default function ItemPage() {
   const jobsQ = useItemJobs(id!);
   const rendersQ = useItemRenders(id!);
   const approvalsQ = useItemApprovals(id!);
+  const measurementsQ = useItemMeasurements(id!);
 
   if (isLoading) {
     return <p className="py-12 text-center text-sm text-[var(--cockpit-muted)]">Loading…</p>;
@@ -177,6 +179,31 @@ export default function ItemPage() {
                     label: "Records",
                     value: String(approvalsQ.data.approval_records.length),
                     tone: approvalsQ.data.approval_records.length > 0 ? "info" : "muted",
+                  },
+                ]}
+              />
+            )}
+          </section>
+          <section className="cockpit-panel p-4">
+            <p className="section-label mb-3">Outcome Observations</p>
+            {measurementsQ.isLoading && <p className="text-sm text-[var(--cockpit-muted)]">Loading…</p>}
+            {measurementsQ.data && (
+              <FactList
+                facts={[
+                  {
+                    label: "Observations",
+                    value: String(measurementsQ.data.measurement_count),
+                    tone: measurementsQ.data.measurement_count > 0 ? "info" : "muted",
+                  },
+                  {
+                    label: "Latest Workflow Type",
+                    value: measurementsQ.data.latest_observation?.platform ?? "—",
+                    tone: measurementsQ.data.latest_observation ? "neutral" : "muted",
+                  },
+                  {
+                    label: "Latest Type",
+                    value: measurementsQ.data.latest_observation?.observation_type ?? "—",
+                    tone: measurementsQ.data.latest_observation ? "neutral" : "muted",
                   },
                 ]}
               />

@@ -49,7 +49,7 @@ export type ReceiptLifecyclePresentation = {
 };
 
 const BLOCKED_STATUSES = new Set(["failed", "qa_failed", "blocked"]);
-const FINISHED_STATUSES = new Set(["published", "archived"]);
+const FINISHED_STATUSES = new Set(["published", "measured", "archived"]);
 const MUTATING_COMMANDS = [
   "uv run profusion retry",
   "uv run profusion approve",
@@ -57,6 +57,7 @@ const MUTATING_COMMANDS = [
   "uv run profusion publish-due",
   "uv run profusion receipt draft",
   "uv run profusion receipt transition",
+  "uv run profusion measure record",
 ];
 const RECEIPT_LIFECYCLE_COPY: Record<string, { badgeLabel: string; next: string | null }> = {
   draft: { badgeLabel: "Receipt Draft", next: "reviewed" },

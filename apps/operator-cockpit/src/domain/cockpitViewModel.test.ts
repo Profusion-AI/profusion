@@ -53,6 +53,17 @@ const queueItems: ContentItem[] = [
     created_at: "2026-05-02T10:00:00Z",
     updated_at: "2026-05-03T15:30:00Z",
   },
+  {
+    id: "item-measured",
+    topic: "Measured case",
+    status: "measured",
+    pillar: "education",
+    audience: "operators",
+    priority: 2,
+    source: null,
+    created_at: "2026-05-02T10:00:00Z",
+    updated_at: "2026-05-04T15:30:00Z",
+  },
 ];
 
 describe("cockpit view model", () => {
@@ -60,11 +71,11 @@ describe("cockpit view model", () => {
     const model = buildQueueModel(queueItems);
 
     expect(model.metrics).toEqual([
-      { label: "Queue", value: 4, tone: "neutral" },
+      { label: "Queue", value: 5, tone: "neutral" },
       { label: "Needs Attention", value: 1, tone: "danger" },
       { label: "Awaiting Approval", value: 1, tone: "warning" },
-      { label: "Evidence Ready", value: 1, tone: "success" },
-      { label: "Safe Commands", value: 4, tone: "info" },
+      { label: "Evidence Ready", value: 2, tone: "success" },
+      { label: "Measured", value: 1, tone: "info" },
     ]);
     expect(model.rows[0]).toMatchObject({
       id: "item-idea",
@@ -92,6 +103,7 @@ describe("cockpit view model", () => {
     expect(filterQueueRows(rows, "Failed / Blocked", "")).toHaveLength(1);
     expect(filterQueueRows(rows, "Awaiting Approval", "")).toHaveLength(1);
     expect(filterQueueRows(rows, "Published", "")).toHaveLength(1);
+    expect(filterQueueRows(rows, "Measured", "")).toHaveLength(1);
     expect(filterQueueRows(rows, "All", "schools")).toEqual([rows[0]]);
     expect(filterQueueRows(rows, "Needs Attention", "approval")).toEqual([rows[2]]);
   });

@@ -331,6 +331,11 @@ def _next_safe_command(
         if latest_publish and latest_publish.get("status") == "failed":
             return f"uv run profusion retry --job-id {latest_publish['id']}"
         return "uv run profusion publish-due"
+    if status == "published":
+        return (
+            f"uv run profusion measure record --item-id {item_id} "
+            "--platform <workflow-type> --observation-type <outcome-type> --recorded-by <operator>"
+        )
     return None
 
 

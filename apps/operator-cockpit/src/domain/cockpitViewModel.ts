@@ -54,7 +54,7 @@ export type CockpitItemModel = {
 
 const NEEDS_ATTENTION = new Set(["blocked", "failed", "qa_failed"]);
 const AWAITING_APPROVAL = new Set(["awaiting_approval"]);
-const EVIDENCE_READY = new Set(["rendered", "qa_passed", "approved", "scheduled", "published"]);
+const EVIDENCE_READY = new Set(["rendered", "qa_passed", "approved", "scheduled", "published", "measured"]);
 
 export const QUEUE_FILTERS = [
   "All",
@@ -65,6 +65,7 @@ export const QUEUE_FILTERS = [
   "Scripted",
   "Scheduled",
   "Published",
+  "Measured",
   "Receipts",
 ] as const;
 
@@ -93,6 +94,7 @@ export function toneForStatus(status?: string | null): CockpitTone {
   if (!status) return "muted";
   if (NEEDS_ATTENTION.has(status) || status.endsWith("_failed")) return "danger";
   if (status === "awaiting_approval") return "warning";
+  if (status === "measured") return "info";
   if (["approved", "scheduled", "published", "qa_passed"].includes(status)) return "success";
   if (["scripted", "rendered", "planned"].includes(status)) return "info";
   return "neutral";
@@ -101,6 +103,7 @@ export function toneForStatus(status?: string | null): CockpitTone {
 function lastEventForStatus(status: string): string {
   if (NEEDS_ATTENTION.has(status) || status.endsWith("_failed")) return "Operator review needed";
   if (status === "awaiting_approval") return "Waiting for approval";
+  if (status === "measured") return "Measured";
   if (status === "published") return "Published";
   if (status === "scheduled") return "Scheduled";
   if (status === "scripted") return "Script finalized";
@@ -111,12 +114,12 @@ function lastEventForStatus(status: string): string {
 
 function approvalForStatus(status: string): string {
   if (status === "awaiting_approval") return "Awaiting Approval";
-  if (["approved", "scheduled", "published"].includes(status)) return "Approved";
+  if (["approved", "scheduled", "published", "measured"].includes(status)) return "Approved";
   return "Not required";
 }
 
 function artifactsForStatus(status: string): string {
-  if (["rendered", "qa_passed", "awaiting_approval", "approved", "scheduled", "published"].includes(status)) {
+  if (["rendered", "qa_passed", "awaiting_approval", "approved", "scheduled", "published", "measured"].includes(status)) {
     return "3 available";
   }
   if (status === "scripted") return "1 available";
@@ -156,6 +159,7 @@ export function buildQueueModel(items: ContentItem[]): CockpitQueueModel {
   }).length;
   const awaitingApproval = items.filter((item) => AWAITING_APPROVAL.has(item.status ?? "")).length;
   const evidenceReady = items.filter((item) => EVIDENCE_READY.has(item.status ?? "")).length;
+  const measured = items.filter((item) => item.status === "measured").length;
   return {
     rows,
     metrics: [
@@ -163,7 +167,7 @@ export function buildQueueModel(items: ContentItem[]): CockpitQueueModel {
       { label: "Needs Attention", value: needsAttention, tone: "danger" },
       { label: "Awaiting Approval", value: awaitingApproval, tone: "warning" },
       { label: "Evidence Ready", value: evidenceReady, tone: "success" },
-      { label: "Safe Commands", value: rows.filter((row) => row.nextCommand).length, tone: "info" },
+      { label: "Measured", value: measured, tone: "info" },
     ],
   };
 }
@@ -190,6 +194,7 @@ export function filterQueueRows(
     if (filter === "Scripted") return row.state === "Scripted";
     if (filter === "Scheduled") return row.state === "Scheduled";
     if (filter === "Published") return row.state === "Published";
+    if (filter === "Measured") return row.state === "Measured";
     if (filter === "Receipts") return row.artifacts !== "0 available";
     return true;
   });

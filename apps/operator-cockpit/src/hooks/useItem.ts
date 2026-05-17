@@ -1,5 +1,13 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { getItem, getItemJobs, getItemRenders, getItemApprovals, getItemReceipts } from "../api/items";
+import {
+  getItem,
+  getItemJobs,
+  getItemRenders,
+  getItemApprovals,
+  getItemReceipts,
+  getItemMeasurements,
+  getMeasurementSummary,
+} from "../api/items";
 import { postRetryQa, postRetryRender, postRetryPublish } from "../api/retry";
 
 export const useItem = (id: string) =>
@@ -34,6 +42,20 @@ export const useItemReceipts = (id: string) =>
   useQuery({
     queryKey: ["item", id, "receipts"],
     queryFn: () => getItemReceipts(id),
+    staleTime: 15_000,
+  });
+
+export const useItemMeasurements = (id: string) =>
+  useQuery({
+    queryKey: ["item", id, "measurements"],
+    queryFn: () => getItemMeasurements(id),
+    staleTime: 15_000,
+  });
+
+export const useMeasurementSummary = () =>
+  useQuery({
+    queryKey: ["measurements", "summary"],
+    queryFn: getMeasurementSummary,
     staleTime: 15_000,
   });
 

@@ -22,6 +22,8 @@ app = typer.Typer(
 )
 receipt_app = typer.Typer(help="Generate and inspect reviewer evidence receipts.")
 app.add_typer(receipt_app, name="receipt")
+measure_app = typer.Typer(help="Record and inspect manual M8 workflow outcome observations.")
+app.add_typer(measure_app, name="measure")
 console = Console()
 
 
@@ -616,6 +618,175 @@ def receipt_transition(
             ("Item", payload["subject_id"]),
             ("Packet", payload["packet_dir"]),
             ("Updated", payload.get("receipt_status_updated_at") or "unknown"),
+        ],
+    )
+
+
+# ---------------------------------------------------------------------------
+# M8 measurement surfaces
+# ---------------------------------------------------------------------------
+
+@measure_app.command("record")
+def measure_record(
+    item_id: str = typer.Option(..., "--item-id", help="Published workflow item id (or unique prefix)."),
+    platform: str = typer.Option(..., "--platform", help="Workflow type slug, e.g. internal_demo."),
+    observation_type: str = typer.Option(
+        ...,
+        "--observation-type",
+        help="Outcome observation type slug, e.g. reviewer_feedback or workflow_outcome.",
+    ),
+    recorded_by: str = typer.Option(..., "--recorded-by", help="Operator who recorded this observation."),
+    qualitative_signal: str | None = typer.Option(
+        None,
+        "--qualitative-signal",
+        help="Plain-English signal or operator interpretation.",
+    ),
+    views: int | None = typer.Option(None, "--views", min=0, help="Manual outcome count, when relevant."),
+    completion_rate: float | None = typer.Option(
+        None,
+        "--completion-rate",
+        min=0.0,
+        max=1.0,
+        help="Manual workflow completion rate from 0 to 1, when relevant.",
+    ),
+    comments: int | None = typer.Option(None, "--comments", min=0, help="Manual feedback/comment count."),
+    hook_variant: str | None = typer.Option(
+        None,
+        "--hook-variant",
+        help="Compatibility field for the scenario variant label.",
+    ),
+    content_format: str | None = typer.Option(
+        None,
+        "--content-format",
+        help="Compatibility field for the workflow type label.",
+    ),
+    editorial_pillar: str | None = typer.Option(
+        None,
+        "--editorial-pillar",
+        help="Compatibility field for the trust domain label.",
+    ),
+    recorded_at: str | None = typer.Option(
+        None,
+        "--recorded-at",
+        help="Observed-at timestamp with timezone; defaults to now.",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Emit machine-readable JSON."),
+) -> None:
+    """Record a manual M8 workflow outcome observation."""
+    _ensure_db()
+    import orchestrator.config as config
+    from orchestrator.measurements import (
+        MeasurementEligibilityError,
+        MeasurementValidationError,
+        record_measurement_observation,
+    )
+
+    item = _resolve_item(item_id)
+    try:
+        payload = record_measurement_observation(
+            db_path=_db_path(),
+            measurements_dir=config.MEASUREMENTS_DIR,
+            item_id=item["id"],
+            platform=platform,
+            observation_type=observation_type,
+            recorded_by=recorded_by,
+            qualitative_signal=qualitative_signal,
+            views=views,
+            completion_rate=completion_rate,
+            comments=comments,
+            hook_variant=hook_variant,
+            content_format=content_format,
+            editorial_pillar=editorial_pillar,
+            recorded_at=recorded_at,
+        )
+    except (MeasurementEligibilityError, MeasurementValidationError) as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(code=1)
+
+    if json_output:
+        _emit_json(payload)
+        return
+
+    _print_key_values(
+        "Profusion Outcome Observation",
+        [
+            ("Observation", payload["observation_id"]),
+            ("Item", payload["content_item_id"]),
+            ("Workflow type", payload["platform"]),
+            ("Type", payload["observation_type"]),
+            ("Recorded by", payload["recorded_by"]),
+            ("Recorded at", payload["recorded_at"]),
+            ("Scenario variant", payload["display_dimensions"].get("scenario_variant")),
+            ("Workflow type label", payload["display_dimensions"].get("workflow_type")),
+            ("Trust domain", payload["display_dimensions"].get("trust_domain")),
+            ("Status", f"{payload['status_before']} -> {payload['status_after']}"),
+            ("Path", payload["observation_path"]),
+        ],
+    )
+
+
+@measure_app.command("list")
+def measure_list(
+    item_id: str = typer.Option(..., "--item-id", help="Workflow item id (or unique prefix)."),
+    json_output: bool = typer.Option(False, "--json", help="Emit machine-readable JSON."),
+) -> None:
+    """List M8 workflow outcome observations for one item."""
+    _ensure_db()
+    import orchestrator.config as config
+    from orchestrator.measurements import measurements_payload
+
+    item = _resolve_item(item_id)
+    payload = measurements_payload(
+        measurements_dir=config.MEASUREMENTS_DIR,
+        item_id=item["id"],
+    )
+    if json_output:
+        _emit_json(payload)
+        return
+
+    table = Table(title=f"Outcome Observations for {item['id'][:12]}")
+    table.add_column("ID")
+    table.add_column("Workflow type")
+    table.add_column("Type")
+    table.add_column("Recorded")
+    table.add_column("Signal")
+    for observation in payload["observations"]:
+        table.add_row(
+            str(observation.get("observation_id", ""))[:18],
+            str(observation.get("platform") or "—"),
+            str(observation.get("observation_type") or "—"),
+            str(observation.get("recorded_at") or "—"),
+            str(observation.get("qualitative_signal") or "—"),
+        )
+    console.print(table)
+
+
+@measure_app.command("summary")
+def measure_summary(
+    json_output: bool = typer.Option(False, "--json", help="Emit machine-readable JSON."),
+) -> None:
+    """Show aggregate M8 workflow outcome observation summary."""
+    _ensure_db()
+    import orchestrator.config as config
+    from orchestrator.measurements import measurement_summary_payload
+
+    payload = measurement_summary_payload(
+        db_path=_db_path(),
+        measurements_dir=config.MEASUREMENTS_DIR,
+    )
+    if json_output:
+        _emit_json(payload)
+        return
+
+    metrics = payload["aggregate_metrics"]
+    _print_key_values(
+        "Profusion Outcome Observation Summary",
+        [
+            ("Observations", payload["observation_count"]),
+            ("Measured items", payload["measured_item_count"]),
+            ("Views", metrics.get("views")),
+            ("Comments", metrics.get("comments")),
+            ("Average completion", metrics.get("average_completion_rate")),
         ],
     )
 

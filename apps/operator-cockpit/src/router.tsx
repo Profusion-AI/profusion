@@ -6,6 +6,7 @@ import LogsPage from "./pages/LogsPage";
 import FailuresPage from "./pages/FailuresPage";
 import ApprovalsPage from "./pages/ApprovalsPage";
 import EvidencePage from "./pages/EvidencePage";
+import MeasurementsPage from "./pages/MeasurementsPage";
 import SystemPage from "./pages/SystemPage";
 
 export const router = createBrowserRouter([
@@ -18,6 +19,7 @@ export const router = createBrowserRouter([
       { path: "failures", element: <FailuresPage /> },
       { path: "approvals", element: <ApprovalsPage /> },
       { path: "evidence", element: <EvidencePage /> },
+      { path: "measurements", element: <MeasurementsPage /> },
       { path: "items/:id", element: <ItemPage /> },
       { path: "logs", element: <LogsPage /> },
       { path: "system", element: <SystemPage /> },
