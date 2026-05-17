@@ -132,9 +132,13 @@ Implemented first slice:
 - `GET /api/measurements/summary`
 - operator cockpit `/measurements` visibility and static snapshot export
 - optional manual comparison dimensions:
-  `hook_variant`, `content_format`, and `editorial_pillar`
-- aggregate comparison rows by hook variant, content format, and editorial
-  pillar in the summary read model and cockpit
+  `scenario_variant`, `workflow_type`, and `trust_domain`
+- aggregate comparison rows by scenario variant, workflow type, and trust
+  domain in the summary read model and cockpit
+
+Compatibility note: older stored JSON/read-model keys may still appear as
+`hook_variant`, `content_format`, and `editorial_pillar`, but current operator
+language is scenario variant, workflow type, and trust domain.
 
 Current M8 constraints:
 
