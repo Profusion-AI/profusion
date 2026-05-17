@@ -1,7 +1,7 @@
 [project]
 name = "profusion"
 version = "0.1.0"
-description = "Semi-autonomous short-form educational media pipeline"
+description = "B2B workflow-trust and evidence-receipt system"
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [

@@ -1,6 +1,6 @@
 # Profusion
 
-Semi-autonomous short-form educational media pipeline. Ingests topics, generates editorial briefs and scripts via Claude, renders video via MoneyPrinterTurbo, and publishes via MoneyPrinterV2.
+B2B workflow-trust and evidence-receipt system. Profusion helps operators define evidence boundaries, preserve workflow artifacts, apply human review gates, state limitations, and produce reviewer-readable receipts for AI-assisted work.
 
 ## Quick start
 

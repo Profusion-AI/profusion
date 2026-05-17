@@ -2,6 +2,16 @@
 
 Date: 2026-05-03
 
+## 2026-05-17 Split Update
+
+Profusion is now the B2B workflow-trust project. Attention Media Lab owns
+education/content operations, including the real MoneyPrinterTurbo and
+MoneyPrinterV2 lineage, Substack package work, source packs, voice guides,
+owned-media drafts, and content-channel measurement. Profusion's active offer
+remains the founder-led Profusion Evidence Receipt Pilot: one workflow, one
+evidence boundary, captured artifacts, human review gates, stated limitations,
+and a reviewer-readable receipt.
+
 ## Executive Summary
 
 Profusion is past the foundation phase and is now in the transition from an
@@ -232,16 +242,24 @@ This is the first meaningful B2B-facing surface.
 
 ### M8: Measurement and Learning Loops
 
-M8 should remain deferred until the pilot path is clearer.
+Historical 2026-05-08 update: M8 started as a narrow content measurement first
+slice after explicit product-owner instruction. After the 2026-05-17 split,
+Profusion keeps this lane only as manual, file-first workflow outcome
+observations; education/content measurement belongs to Attention Media Lab.
 
-Potential later scope:
+Implemented first-slice scope:
 
-- Performance and outcome metrics
-- Review-loop analytics
-- Published-output measurement
-- Feedback loops for improving future sessions or content workflows
+- Manual performance and outcome observations.
+- Published-output measurement via `uv run profusion measure record`.
+- Item-level and aggregate read models.
+- Operator cockpit measurement visibility.
 
-M8 should not distract from M7 closeout or paid-pilot readiness.
+Still deferred:
+
+- Platform API metric imports.
+- Automated optimization loops.
+- Model feedback loops.
+- Buyer-facing analytics dashboards.
 
 ### Later: Customer Admin Portal
 

@@ -1,5 +1,9 @@
 # Profusion Architecture
 
+## 2026-05-17 Project Boundary
+
+Profusion's active architecture is workflow trust and evidence receipts. MoneyPrinterTurbo and MoneyPrinterV2 have moved to `/home/kyle/attention-media-lab` as education/content tooling. Existing Profusion render/publish code is legacy/demo infrastructure until a later cleanup removes or replaces it with fixture-backed demo receipts.
+
 ## Layer Diagram
 
 ```
@@ -18,11 +22,14 @@
 │  ├── read_models.py  — inspection/JSON dashboard contracts   │
 │  ├── retry.py        — conservative retry orchestration      │
 │  ├── diagnostics.py  — redacted failure logs + metadata      │
+│  ├── measurements.py — file-first M8 observations/comparisons│
+│  ├── substack_publish.py — M8 Substack package/readback loop │
 │  ├── config.py       — .env loader                          │
 │  └── adapters/                                               │
 │      ├── claude.py   — Anthropic SDK (LLM, all gen work)    │
 │      ├── turbo.py    — MoneyPrinterTurbo adapter (M2)       │
 │      ├── v2.py       — MoneyPrinterV2 adapter (M4)         │
+│      ├── substack.py — manual Substack package/RSS adapter  │
 │      └── firecrawl.py— Firecrawl ingest adapter (M1)       │
 └──────────┬───────────────────────────┬───────────────────────┘
            │ render(script, profile)   │ publish(video, metadata)
@@ -46,6 +53,8 @@
 │  ├── topics/         — raw topic intake files               │
 │  ├── approvals/      — approval records                     │
 │  ├── publish_logs/   — per-publish-job logs                 │
+│  ├── measurements/   — file-first M8 measurement observations│
+│  ├── substack/       — file-first Substack package/readback  │
 │  └── logs/           — agent action + failure logs          │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -84,10 +93,19 @@
 
 8. M6 operator hardening
    → inspect / jobs / renders / approvals / handoff / retry
-   → stable JSON contracts for the future localhost dashboard
+   → stable JSON contracts for the internal operator cockpit
 
-9. (future M8) measure
-   → performance captured
+9. M8 Substack spike
+   → local source/voice artifacts can guide a long-form Substack draft
+   → substack import-article requires explicit human content approval
+   → substack package writes copy/paste publication artifacts
+   → human publishes in Substack web editor
+   → substack publish records the URL after explicit confirmation
+   → substack verify checks the recorded URL through public RSS readback
+   → receipt draft can include the Substack publish evidence
+
+10. M8 measure
+   → manual/file-first observation captured with comparison dimensions
    → status: measured → archived
 ```
 
@@ -108,3 +126,4 @@ See DECISIONS.md for full rationale on:
 - State machine canonical source (PRD §13)
 - Edge-TTS as default TTS engine
 - M6 read-model contracts and retry lineage
+- M8 Substack publishing/evidence spike boundary

@@ -1,9 +1,12 @@
 # Profusion Pipeline Status
 
-## Current Project State: M6 complete; M7 locked and shipped; M7.5 evidence slice complete
+## Current Project State: Profusion split from education/content engine; M7 locked; M7.5 receipt slice complete; M8 outcome observations in progress
 
-As of 2026-05-06, M6 remains functionally closed and M7 is locked as the
-internal operator cockpit milestone. The cockpit lives at
+As of 2026-05-17, Profusion is the B2B workflow-trust project. The real education/content engine, MoneyPrinterTurbo/MoneyPrinterV2 lineage, Substack package work, source packs, voice guides, and owned-media drafts now belong to `/home/kyle/attention-media-lab`. Profusion may keep a sanitized AI-assisted media/content demo only to explain receipt mechanics.
+
+As of 2026-05-08, M6 remains functionally closed and M7 is locked as the
+internal operator cockpit milestone. M8 has now started as manual workflow
+outcome observation plus comparison loops. The cockpit lives at
 `apps/operator-cockpit/`. The public Netlify website remains in `dashboard/`
 and is not the M7 cockpit surface.
 
@@ -53,7 +56,7 @@ M7.5 first-slice smoke is documented in
 - [x] Redacted diagnostic log helper with paired human-readable and JSON metadata logs
 - [x] `smoke --offline` fixture-backed command for local operator-surface verification without live vendors
 - [x] Runbooks split into daily operations, failure recovery, handoff, and release checklist docs
-- [x] M7/M8 roadmap correction recorded: M7 localhost dashboard, M8 measurement loops
+- [x] M7/M8 roadmap correction recorded: M7 operator cockpit, M8 measurement loops
 - [x] 171/171 tests passing
 
 **Notes:**
@@ -123,10 +126,145 @@ https://69f770eec1439a4cd6b2a8c9--profusionai.netlify.app/queue
 The draft is still a static Vite preview with read-only `/api/*` JSON files.
 It does not run local FastAPI/SQLite mutations.
 
-**Next decision before M8:**
-- Decide whether draft receipt visibility is enough for the first reviewer
-  conversation, or whether M8 should wait for a small receipt lifecycle command
-  covering `reviewed`, `approved_for_packet`, and `delivered`.
+The small receipt lifecycle command exists:
+
+- `uv run profusion receipt transition --receipt-id <id> --to reviewed --json`
+- `uv run profusion receipt transition --receipt-id <id> --to approved_for_packet --json`
+- `uv run profusion receipt transition --receipt-id <id> --to delivered --json`
+
+### M8: Workflow Outcome Observations — FIRST SLICE STARTED
+
+**Goal:** Close the published-output feedback loop without adding platform
+automation, optimization algorithms, or customer-facing measurement surfaces.
+
+**2026-05-17 split note:** After the Profusion / Attention Media Lab split,
+M8 remains in Profusion only as generic workflow outcome observations. The
+earlier Substack and education-channel material is historical context or a
+sanitized receipt-demo source, not Profusion's operating direction.
+
+**Plain-English definition:** Manual observation means a human operator records
+what happened after a content item was published, reviewed, or used in a
+controlled demo. The human observation is the source of truth; Profusion stores
+it as a file-first measurement artifact and exposes it through CLI, API, and
+cockpit read models.
+
+**Implemented first slice:**
+- `src/orchestrator/measurements.py` records file-first manual measurement
+  observations under `data/measurements/<item_id>/`.
+- `uv run profusion measure record --item-id <id> --platform <slug> --observation-type <slug> --recorded-by <operator> --json`
+  writes one observation and transitions eligible `published` items to
+  `measured`.
+- `uv run profusion measure list --item-id <id> --json` lists item-level
+  observations.
+- `uv run profusion measure summary --json` exposes aggregate measurement
+  counts, platform/type summaries, and simple aggregate metrics.
+- `GET /api/items/{item_id}/measurements` and
+  `GET /api/measurements/summary` expose the same read models to the cockpit.
+- The standalone operator cockpit now has `/measurements` visibility and item
+  measurement facts, with static snapshot export support.
+- Manual observations can carry generic comparison dimensions for `hook_variant`,
+  `content_format`, and `editorial_pillar`.
+- Measurement summaries now aggregate comparison rows across hook variants,
+  content formats, and editorial pillars without adding platform imports or
+  optimization logic.
+
+**Current M8 boundary after the split:**
+- Manual/file-first observations only.
+- No platform API imports.
+- No automated optimization loop.
+- No model feedback loop.
+- No Work Trust reinterpretation of M8.
+- No public website changes.
+- No education/content-channel ownership inside Profusion.
+
+**Historical/sanitized demo context: Substack publishing + evidence loop**
+
+This earlier M8 proof path is now historical context or a sanitized demo
+receipt source:
+
+```text
+Profusion content item -> Substack-ready package -> human approval ->
+published Substack post -> RSS readback verification -> receipt/evidence
+packet -> manual M8 measurement observation
+```
+
+Implemented safe first slice:
+
+- `src/orchestrator/adapters/substack.py` defines typed Substack adapter
+  primitives for manual package artifacts and public RSS readback.
+- `src/orchestrator/substack_publish.py` prepares file-first Substack package
+  artifacts under `data/substack/<item_id>/`.
+- `uv run profusion substack package --item-id <id> --json` writes
+  `draft.md`, `draft.html`, `metadata.json`, `approval_snapshot.json`,
+  `limitations.md`, and `publish_attempts.json`.
+- `uv run profusion substack draft --item-id <id> --mode manual --json`
+  reuses an existing package when present, instead of overwriting operator
+  metadata.
+- `uv run profusion substack import-article --draft-path <path> --title <title> --approved-by <operator> --confirm-content-approval --json`
+  gives the operator a governed manual path from a human-approved local
+  long-form draft to an approved, package-ready Profusion content item without
+  editing SQLite by hand.
+- `uv run profusion substack publish --item-id <id> --url <published_url> --confirm-publish --json`
+  requires an existing package, records that a human intentionally published
+  the prepared post, and stores the Substack URL in the existing publish-job
+  ledger.
+- `uv run profusion substack verify --item-id <id> --url <published_url> --method rss --json`
+  requires that the same URL was recorded first, writes public RSS readback
+  evidence to `data/substack/<item_id>/verification_rss.json`, and fails if the
+  URL is not present in the feed.
+
+Deferred until the manual path proves useful:
+
+- browser automation for draft creation
+- browser automation for publishing
+- Stackhooks structured readback
+- MCP wrapper tools around the Profusion CLI
+- automated platform analytics import or optimization
+
+M8.1 voice/manual publication run artifacts existed locally before the split
+and now belong to `/home/kyle/attention-media-lab` if used operationally:
+
+- Source PDF text extraction:
+  `data/source_packs/profusion_substack_voice/ai_speed_is_not_enough_work_has_to_become_reviewable.md`
+- Source pack note:
+  `data/source_packs/profusion_substack_voice/README.md`
+- Voice guide:
+  `data/style/profusion_substack_voice_2026-05-08.md`
+- Draft for human review:
+  `data/drafts/profusion_substack_voice/human_in_the_loop_is_not_enough.md`
+
+This draft has not been treated as live-publish approved yet. The next operator
+gate is Kyle review, then `substack import-article`, then the existing package
+-> manual publish -> URL record -> RSS verify -> receipt -> measurement loop.
+
+**Earlier M8 measurement/cockpit verification baseline:**
+- `uv run pytest`: 189 passed
+- `uv run profusion smoke --offline`: passed
+- `cd apps/operator-cockpit && corepack pnpm test`: 4 files passed, 11 tests passed
+- `cd apps/operator-cockpit && corepack pnpm lint`: passed
+- `cd apps/operator-cockpit && corepack pnpm build:netlify`: exported 2 static item snapshots and built successfully
+- `cd apps/operator-cockpit && corepack pnpm smoke:static`: passed for 2 items
+- `cd dashboard && corepack pnpm lint`: passed
+- `cd dashboard && corepack pnpm build`: passed
+- `git diff --check`: passed
+
+**Substack spike QC verification:**
+- `uv run pytest tests/test_substack_publish.py -q`: 17 passed
+- `uv run pytest tests/test_substack_publish.py tests/test_receipts.py tests/test_measurements.py -q`: 31 passed
+- `uv run pytest -q`: 206 passed
+- `uv run profusion smoke --offline`: passed
+- `git diff --check`: passed
+
+The full baseline still needs to be rerun after the first real Substack
+operator scenario before M8 is treated as closed.
+
+**M8 remains open until:**
+- at least three manual measurement observations exist
+- at least two comparison dimensions have been exercised
+- `measure list` and `measure summary` have been reviewed against real/demo data
+- `/measurements` has been visually QA'd with non-empty measurement data
+- an operator runbook or closeout note documents the end-to-end loop
+- the full verification baseline has been rerun
 
 ### M5: Scheduling + cross-posting — COMPLETE
 
@@ -275,5 +413,5 @@ It does not run local FastAPI/SQLite mutations.
 | M5 | Scheduling + cross-posting | Complete |
 | M6 | Agent-hardening: runbooks, idempotency, handoff | Complete |
 | M7 | Internal operator cockpit | Complete |
-| M7.5 | Reviewer evidence packets | In progress |
-| M8 | Measurement + learning loops | Not started |
+| M7.5 | Reviewer evidence packets | First slice complete |
+| M8 | Measurement + learning loops | First slice started |

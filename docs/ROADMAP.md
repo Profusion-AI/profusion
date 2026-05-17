@@ -1,16 +1,12 @@
 # Profusion Roadmap
 
-Date: 2026-05-06
+Date: 2026-05-08
 
 ## Current Definition
 
-Profusion AI is evolving into a governed AI-mediated workflow evidence system.
-The current codebase implements its first governed workflow: a local-first
-content operating system for AI-assisted media creation, review, rendering,
-publishing, and receipt generation.
+Profusion AI is a governed AI-mediated workflow evidence system. Its near-term B2B lane is the Profusion Evidence Receipt Pilot: one workflow, one evidence boundary, captured artifacts, human review gates, stated limitations, and a reviewer-readable receipt.
 
-This roadmap does not replace the M0-M6 content operating system. It puts that
-system inside the broader evidence architecture.
+The education/content engine has moved to `/home/kyle/attention-media-lab`. Profusion may retain one sanitized content/media demo as a receipt example, but it is not the owner of Kyle's education media channel.
 
 ## Completed Foundation: M0-M6
 
@@ -117,15 +113,91 @@ documentation quality, and human accountability.
 Do not include ranking, hire/no-hire, role-fit recommendation, automated
 selection, or automated rejection language.
 
-## M8: Measurement And Learning Loops
+## M8: Workflow Outcome Observations
 
-M8 remains deferred.
+Status: first slice started on 2026-05-08.
 
-Do not prioritize measurement loops until:
+After the 2026-05-17 split, M8 remains in Profusion only as generic workflow
+outcome observations. It is not content-channel analytics, education-channel
+measurement, a Work Trust build, AI observability build, customer portal, or
+public website change.
 
-- M7 is cleanly operable
-- M7.5 can generate a reviewer-readable evidence packet
-- there is buyer signal that measurement should move back onto the critical path
+Implemented first slice:
+
+- file-first manual measurement observations under `data/measurements/`
+- `uv run profusion measure record --item-id <id> --platform <slug> --observation-type <slug> --recorded-by <operator> --json`
+- `uv run profusion measure list --item-id <id> --json`
+- `uv run profusion measure summary --json`
+- `GET /api/items/{item_id}/measurements`
+- `GET /api/measurements/summary`
+- operator cockpit `/measurements` visibility and static snapshot export
+- optional manual comparison dimensions:
+  `hook_variant`, `content_format`, and `editorial_pillar`
+- aggregate comparison rows by hook variant, content format, and editorial
+  pillar in the summary read model and cockpit
+
+Current M8 constraints:
+
+- manual imports only
+- no platform automation
+- no optimization algorithms
+- no model feedback loop
+- no buyer-facing measurement dashboard
+- no public website changes
+
+Later M8 hardening can add stronger operator guidance and controlled imports
+after manual comparison records prove useful.
+
+### Historical/Sanitized Demo: Substack Publishing + Evidence Loop Spike
+
+Status: safe first slice implemented on 2026-05-08.
+
+This earlier spike is historical context or a sanitized receipt-demo source
+after the split. Real Substack and education/content operations now belong to
+`/home/kyle/attention-media-lab`.
+
+```text
+approved Profusion item -> Substack-ready package -> human publication ->
+Substack URL record -> RSS readback -> receipt packet -> manual measurement
+```
+
+Implemented first slice:
+
+- `src/orchestrator/adapters/substack.py`
+- `src/orchestrator/substack_publish.py`
+- `uv run profusion substack package --item-id <id> --json`
+- `uv run profusion substack import-article --draft-path <path> --title <title> --approved-by <operator> --confirm-content-approval --json`
+  imports a human-approved local long-form draft as an approved package-ready
+  item without SQLite hand-editing
+- `uv run profusion substack draft --item-id <id> --mode manual --json`
+  reuses an existing manual package when present
+- `uv run profusion substack publish --item-id <id> --url <published_url> --confirm-publish --json`
+  requires an existing manual package
+- `uv run profusion substack verify --item-id <id> --url <published_url> --method rss --json`
+  requires a matching recorded publication URL and fails if the URL is absent
+  from RSS
+- publication artifacts under `data/substack/<item_id>/`
+- receipt evidence now carries publish job platform, URL, external id, and
+  publish timestamp when present
+
+M8.1 voice run:
+
+- Existing Substack article extracted locally as a source voice sample.
+- v0 Profusion Substack voice guide written under `data/style/`.
+- Follow-on draft written under `data/drafts/` for human review.
+- `substack import-article` creates an approved package-ready item only after
+  `--confirm-content-approval`; the draft has not yet been imported or
+  published.
+
+Boundary:
+
+- no public website changes
+- no hidden Substack write endpoints
+- no authenticated Substack dashboard scraping
+- no stored browser cookies or sessions
+- no automated email/app inbox send
+- no Stackhooks or analytics import in the first slice
+- no MCP wrapper until the project CLI is the durable source of truth
 
 ## Deferred Surfaces
 
@@ -145,6 +217,43 @@ The following are out of scope for M7 and M7.5:
 - Work Trust marketing launch
 
 ## Current Verification Baseline
+
+Earlier M8 measurement/cockpit verification baseline on 2026-05-08:
+
+```bash
+uv run pytest
+uv run profusion smoke --offline
+cd apps/operator-cockpit && corepack pnpm test
+cd apps/operator-cockpit && corepack pnpm lint
+cd apps/operator-cockpit && corepack pnpm build:netlify
+cd apps/operator-cockpit && corepack pnpm smoke:static
+cd dashboard && corepack pnpm lint
+cd dashboard && corepack pnpm build
+git diff --check
+```
+
+Observed results:
+
+- `uv run pytest`: 189 passed
+- `uv run profusion smoke --offline`: passed
+- `cd apps/operator-cockpit && corepack pnpm test`: 4 files passed, 11 tests passed
+- `cd apps/operator-cockpit && corepack pnpm lint`: passed
+- `cd apps/operator-cockpit && corepack pnpm build:netlify`: exported 2 static item snapshots and built successfully
+- `cd apps/operator-cockpit && corepack pnpm smoke:static`: passed for 2 items
+- `cd dashboard && corepack pnpm lint`: passed
+- `cd dashboard && corepack pnpm build`: passed
+- `git diff --check`: passed
+
+Substack spike QC verification:
+
+- `uv run pytest tests/test_substack_publish.py -q`: 17 passed
+- `uv run pytest tests/test_substack_publish.py tests/test_receipts.py tests/test_measurements.py -q`: 31 passed
+- `uv run pytest -q`: 206 passed
+- `uv run profusion smoke --offline`: passed
+- `git diff --check`: passed
+
+The full verification baseline should be rerun after the first real Substack
+operator scenario before M8 is closed.
 
 Latest M7 lock verification on 2026-05-06:
 
