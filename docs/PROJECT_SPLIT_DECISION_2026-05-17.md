@@ -40,6 +40,6 @@ Do not delete historical documentation. Outdated Profusion or MoneyPrinter-deriv
 
 ## New Project
 
-The education/content project lives at:
+The education/content project canonical target path is:
 
 `/home/kyle/attention-media-lab`
