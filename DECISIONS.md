@@ -300,11 +300,11 @@ SQLite table.
 
 ## Historical pre-split context
 
-The 2026-05-08 M8 and Substack decisions below predate the 2026-05-17 split.
-They remain for implementation history only. After the split, Profusion keeps
-M8 only as generic workflow outcome observations, and operational education,
-Substack, source-pack, voice-guide, and owned-media work belongs to
-`/home/kyle/attention-media-lab`.
+The 2026-05-08 M8 measurement decision below predates the 2026-05-17 split,
+but still maps to current Profusion work as generic workflow outcome
+observations. The old Substack publishing and evidence-loop decisions were
+superseded by the split and archived in
+`docs/archive/2026-05-17-project-split/DECISIONS_substack_spike_2026-05-17.md`.
 
 ## 2026-05-08 — M8 Measurement First Slice
 
@@ -317,49 +317,6 @@ Substack, source-pack, voice-guide, and owned-media work belongs to
 - File-first artifacts preserve inspectability while the useful measurement shape is still being learned.
 - Before the split, M8 was framed as content measurement loops; after the
   split, Profusion keeps only generic workflow outcome observations.
-
-## 2026-05-08 — M8 Substack Publishing + Evidence Loop Spike
-
-### Substack starts as a manual package and readback adapter
-**Decision:** Build the Substack working-concept path as a Profusion adapter and
-CLI/service first: package an approved content item for manual Substack
-publishing, record a human-published URL only after an existing package and
-explicit confirmation, and verify the recorded URL through RSS readback.
-
-**Rationale:**
-- Substack's official Developer API documentation, reviewed 2026-05-08, describes public read-only profile lookup and does not document create/publish post endpoints.
-- Substack's official publishing instructions still describe the web editor, dashboard, audience/email controls, and scheduling UI as the normal publishing path.
-- Substack's default email/app inbox behavior makes ungated browser publish automation an unnecessary blast risk for the first spike.
-- RSS readback is official and lightweight enough to verify that a public post exists before richer third-party readback is introduced.
-- Stackhooks can be useful later for structured post/comment/engagement readback, but it is independent from Substack and should not become the publishing channel.
-
-### Manual Substack article drafts need an explicit content-approval gate
-**Decision:** Add a narrow `substack import-article` path for human-approved
-local long-form drafts. The command requires `--confirm-content-approval`,
-records the draft, voice guide, and source sample as source documents when
-provided, and creates an approved package-ready content item without requiring
-manual SQLite edits.
-
-**Rationale:**
-- The Substack voice run needs a safe path from local draft artifact to
-  package-ready Profusion item.
-- The command still does not publish to Substack, does not scrape Substack, and
-  does not bypass the later `--confirm-publish` gate.
-- The current content state machine is video-shaped, so this remains a bounded
-  M8.1 spike path until article-native lifecycle states are warranted.
-
-### MCP wraps Profusion commands later, not business logic first
-**Decision:** Do not put core Substack publishing behavior directly in an MCP
-script. MCP tools may later wrap safe Profusion commands after the adapter/CLI
-contract is stable.
-
-**Rationale:**
-- Profusion's durable architecture keeps platform behavior behind
-  `src/orchestrator/` adapters and services.
-- MCP is a tool interface, not the source of business rules.
-- Human approval, confirmation prompts, artifact logging, and receipt/measurement
-  linkage are project invariants that should remain testable without an MCP
-  host.
 
 ## 2026-05-17 — Profusion / Attention Media Lab split
 

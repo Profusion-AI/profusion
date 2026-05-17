@@ -13,10 +13,14 @@ Archived documents are historical. Do not use them as current implementation gui
 
 - `directional-spec.md`
 - `directional-spec-revised.md`
+- `basic-qs-edtech.md`
+- `profusion-ai-website-mvp-handoff-2026-04-28.md`
+- `profusion-m6-codex-handoff.md`
 - `M7_M7_5_TO_M8_HANDOFF_2026-05-03.md`
 - `profusion-m7-m8-status-review-2026-05-06.md`
 - `profusion-m75-m8-workflow-receipt-simulator-handoff.md`
 - `profusion-m775-implementation-alignment-addendum-2026-05-06.md`
 - `profusion_m8_pipeline_test_artifact.md`
+- `DECISIONS_substack_spike_2026-05-17.md`
 - `STATUS_with_substack_spike_2026-05-17.md`
 - `ROADMAP_with_substack_spike_2026-05-17.md`
