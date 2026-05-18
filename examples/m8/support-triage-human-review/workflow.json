@@ -1,0 +1,29 @@
+{
+  "workflow_slug": "support-triage-human-review",
+  "workflow_name": "Customer Trust Triage Receipt",
+  "source_system": "n8n",
+  "source_template_url": "https://n8n.io/workflows/15120-route-support-messages-with-gpt-41-mini-slack-email-and-human-review/",
+  "evidence_mode": "fixture_backed_local_demo",
+  "workflow_boundary": "Local fixture simulating an n8n-style support triage workflow: inbound support message, AI classification, AI draft reply, human review for sensitive billing complaint, final reply artifact marked ready.",
+  "trigger_summary": "Two support messages were replayed from local artifacts: a routine invoice request and a sensitive billing complaint.",
+  "workflow_purpose": "Show when AI-assisted support work crossed a human review boundary before a final response artifact was marked ready.",
+  "cases": [
+    {
+      "case_id": "routine_invoice",
+      "case_name": "Routine invoice request",
+      "requires_human_review": false,
+      "inbound_summary": "Customer asks for the April invoice to be resent."
+    },
+    {
+      "case_id": "sensitive_billing_complaint",
+      "case_name": "Sensitive billing complaint",
+      "requires_human_review": true,
+      "inbound_summary": "Customer says they were charged twice, ignored by support, and may file a complaint."
+    }
+  ],
+  "limitations": [
+    "The fixture simulates an n8n-style run with local artifacts; it does not prove live Gmail, Slack, Google Sheets, HubSpot, or n8n API execution.",
+    "No live customer message was sent by P0.",
+    "The receipt does not certify compliance or provide legal assurance."
+  ]
+}

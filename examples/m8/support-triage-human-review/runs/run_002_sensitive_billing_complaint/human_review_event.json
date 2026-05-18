@@ -1,0 +1,11 @@
+{
+  "case_id": "sensitive_billing_complaint",
+  "reviewer": "Kyle",
+  "decision": "edited",
+  "reviewed_at": "2026-05-18T14:08:45Z",
+  "reviewed_artifact_ids": [
+    "sensitive_billing_complaint.ai_draft_reply"
+  ],
+  "resulting_artifact_id": "sensitive_billing_complaint.final_reply",
+  "review_summary": "Reviewer kept the apology, removed any promise that the charge was already verified, and added a concrete escalation boundary."
+}

@@ -1,0 +1,44 @@
+{
+  "run_id": "run_002_sensitive_billing_complaint",
+  "case_id": "sensitive_billing_complaint",
+  "case_name": "Sensitive billing complaint",
+  "started_at": "2026-05-18T14:05:00Z",
+  "completed_at": "2026-05-18T14:09:30Z",
+  "inbound_artifact": "inbound_message.md",
+  "ai_actions": [
+    {
+      "action": "classify_message",
+      "input_artifact": "inbound_message.md",
+      "output_artifact": "ai_classification.json",
+      "risk_signal": "complaint_escalation"
+    },
+    {
+      "action": "draft_reply",
+      "input_artifact": "inbound_message.md",
+      "output_artifact": "ai_draft_reply.md",
+      "risk_signal": "sensitive"
+    }
+  ],
+  "tool_actions": [
+    {
+      "action": "route",
+      "artifact": "ai_classification.json",
+      "description": "Routed to human review because the complaint alleged a double charge, prior support failure, and possible escalation."
+    },
+    {
+      "action": "send_final_reply",
+      "artifact": "final_reply.md",
+      "description": "Final reply artifact marked ready after human review; no live customer message was sent by P0."
+    },
+    {
+      "action": "log_interaction",
+      "artifact": "execution_log.json",
+      "description": "Fixture interaction log captured locally."
+    }
+  ],
+  "outcome": "Sensitive billing complaint final response artifact was marked ready only after human review edited the AI draft.",
+  "failure_or_retry_state": {
+    "status": "none",
+    "details": "No failure or retry occurred in the fixture run."
+  }
+}

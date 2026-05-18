@@ -1,0 +1,31 @@
+{
+  "run_id": "run_001_routine_invoice",
+  "case_id": "routine_invoice",
+  "events": [
+    {
+      "at": "2026-05-18T14:00:05Z",
+      "actor": "fixture",
+      "action": "ingest_inbound_message",
+      "artifact": "inbound_message.md"
+    },
+    {
+      "at": "2026-05-18T14:00:18Z",
+      "actor": "ai",
+      "action": "classify_message",
+      "artifact": "ai_classification.json"
+    },
+    {
+      "at": "2026-05-18T14:00:42Z",
+      "actor": "ai",
+      "action": "draft_reply",
+      "artifact": "ai_draft_reply.md"
+    },
+    {
+      "at": "2026-05-18T14:01:20Z",
+      "actor": "fixture",
+      "action": "send_final_reply",
+      "artifact": "final_reply.md",
+      "note": "Artifact marked ready in the fixture log; no live customer message was sent by P0."
+    }
+  ]
+}

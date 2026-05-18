@@ -1,0 +1,9 @@
+{
+  "case_id": "routine_invoice",
+  "category": "billing",
+  "sensitivity": "routine",
+  "route": "billing_support",
+  "needs_human_review": false,
+  "risk_signal": "routine_billing_request",
+  "rationale": "The customer asks for an invoice resend and does not allege harm, escalation, legal action, or prior support failure."
+}

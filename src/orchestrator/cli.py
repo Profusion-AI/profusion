@@ -24,6 +24,8 @@ receipt_app = typer.Typer(help="Generate and inspect reviewer evidence receipts.
 app.add_typer(receipt_app, name="receipt")
 measure_app = typer.Typer(help="Record and inspect manual M8 workflow outcome observations.")
 app.add_typer(measure_app, name="measure")
+m8_app = typer.Typer(help="Run M8-GTM fixture-backed workflow receipt demos.")
+app.add_typer(m8_app, name="m8")
 console = Console()
 
 
@@ -792,6 +794,45 @@ def measure_summary(
             ("Average completion", metrics.get("average_completion_rate")),
         ],
     )
+
+
+# ---------------------------------------------------------------------------
+# M8-GTM demo receipt surfaces
+# ---------------------------------------------------------------------------
+
+@m8_app.command("demo")
+def m8_demo(
+    workflow_slug: str = typer.Argument(..., help="M8-GTM workflow slug to run."),
+    output_dir: Path | None = typer.Option(
+        None,
+        "--output-dir",
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+        help="Receipt output root. Defaults to data/receipts/m8-gtm.",
+    ),
+) -> None:
+    """Generate a fixture-backed M8-GTM workflow receipt packet."""
+
+    from orchestrator.m8_gtm.harness import generate_demo_packet
+    from orchestrator.m8_gtm.schemas import M8GTMError
+
+    try:
+        result = generate_demo_packet(workflow_slug, output_root=output_dir)
+    except M8GTMError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(code=1)
+
+    console.print(f"Loaded workflow fixture: {workflow_slug}")
+    console.print(
+        "Loaded run artifacts: routine_invoice, sensitive_billing_complaint"
+    )
+    console.print("Validated artifact manifest")
+    console.print("Generated M8 observation")
+    console.print("Generated workflow receipt JSON")
+    console.print("Generated workflow receipt Markdown")
+    console.print("Generated workflow receipt HTML")
+    typer.echo(f"Receipt: {result['workflow_receipt_html']}")
 
 
 # ---------------------------------------------------------------------------

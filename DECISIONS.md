@@ -328,3 +328,40 @@ superseded by the split and archived in
 - MoneyPrinterTurbo, MoneyPrinterV2, Substack packaging, source packs, voice guides, and owned-media drafts belong in `/home/kyle/attention-media-lab`.
 - Profusion keeps a sanitized demo workflow only to demonstrate receipt mechanics.
 - M8 remains in Profusion only as generic workflow outcome observations.
+
+## 2026-05-18 — M8-GTM Overlay and n8n proving ground
+
+### M8 technical meaning stays intact
+**Decision:** Use an M8-GTM Overlay for the next Profusion prototype. Do not
+redefine M8 and do not create an M8.5 detour. M8 remains manual/file-first
+workflow outcome observations; the first commercially useful M8 observation
+loop will use an n8n workflow receipt harness as the proving ground.
+
+**Rationale:**
+- This preserves the current repo truth and milestone trail.
+- n8n can provide the executable workflow substrate while Profusion captures
+  evidence, records outcome observations, and generates the buyer-readable
+  receipt.
+- The overlay keeps Profusion out of AI observability, support automation,
+  compliance automation, website redesign, and broad n8n-platform claims.
+- The ship test is whether Profusion can take one AI-assisted workflow and
+  produce a receipt showing what happened, what artifacts exist, what a human
+  reviewed, what passed or failed, and what the receipt does not prove.
+
+### First proving-ground workflow is support triage with human review
+**Decision:** The first demo workflow is `support-triage-human-review`, framed
+externally as a Customer Trust Triage Receipt or Sensitive Support Response
+Receipt. Do not present the demo as generic support automation.
+
+**Rationale:**
+- The demo has a clear buyer-readable sequence: inbound customer message, AI
+  classification, AI-drafted response, sensitive-case boundary, human
+  approve/edit/reject event, final action, execution log, and Profusion receipt.
+- The intended story is not "AI answers support tickets"; it is "Profusion shows
+  when AI work was safe to approve."
+- The first scenario should contrast one routine case with one sensitive billing
+  complaint so the value of human judgment and reviewable evidence is visible.
+- Live Gmail, Slack, customer data, and production n8n API integration are not
+  required for the first prototype; realistic local JSON artifacts and a
+  markdown receipt are acceptable if the evidence loop is durable and
+  reproducible.

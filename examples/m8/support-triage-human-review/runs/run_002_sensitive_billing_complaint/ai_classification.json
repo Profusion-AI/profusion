@@ -1,0 +1,9 @@
+{
+  "case_id": "sensitive_billing_complaint",
+  "category": "billing",
+  "sensitivity": "sensitive",
+  "route": "human_review",
+  "needs_human_review": true,
+  "risk_signal": "complaint_escalation",
+  "rationale": "The customer alleges a double charge, prior support failure, and possible external complaint."
+}
