@@ -16,6 +16,9 @@ Current milestone state:
   complete.
 - M8 Measurement and Learning Loops: active as generic workflow outcome
   observations, not content-channel analytics.
+- M8-GTM P0: fixture-backed Customer Trust Triage Receipt harness complete.
+- M8-GTM P1: receipt-derived HyperFrames demo video specified but not started.
+- M8-GTM P2: optional cockpit visibility deferred and read-only only.
 
 The education/content creation system, Substack-specific publishing work,
 MoneyPrinterTurbo continuity work, and MoneyPrinterV2 continuity work now live
@@ -29,6 +32,9 @@ sanitized demo compatibility paths connected to the original MPT/V2 heritage.
 They are not the current B2B product promise. Prefer receipts, cockpit
 read-models, workflow outcome observations, and private OpenClaw operating
 artifacts for current work.
+
+Start active-surface questions from `docs/ACTIVE_SURFACES.md`. That document
+is the public map for what is active, frozen, deferred, ignored, or private.
 
 When a Profusion or MPT-era document is outdated or no longer matches this
 renewed implementation vision, move it under the relevant `docs/archive/`
@@ -70,6 +76,10 @@ public website:
 - `uv run pytest` runs the orchestrator test suite.
 - `uv run profusion status` checks the local queue state.
 - `uv run profusion check-env` validates tools and configured services.
+- `scripts/bootstrap_uv.sh` installs `uv` locally if a fresh environment does
+  not have it.
+- `scripts/path_c_smoke.sh` runs the active Path C receipt reproduction smoke
+  under `/tmp`.
 - `uv run profusion smoke --offline` runs fixture-backed operator verification
   without live vendors.
 - `uv run profusion serve --dev` starts the local API/operator backend.

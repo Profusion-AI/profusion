@@ -4,14 +4,17 @@ B2B workflow-trust and evidence-receipt system. Profusion helps operators define
 
 ## Quick start
 
+For the active P0 receipt path, vendor submodules are not required:
+
 ```bash
-git clone --recurse-submodules <repo-url> ~/profusion
+git clone https://github.com/Profusion-AI/profusion.git ~/profusion
 cd ~/profusion
-uv sync
-cp .env.example .env   # add ANTHROPIC_API_KEY
-uv run profusion check-env
-uv run profusion status
+scripts/bootstrap_uv.sh
+scripts/path_c_smoke.sh
 ```
+
+Use `git clone --recurse-submodules` only when intentionally inspecting the
+legacy MoneyPrinter render/publish compatibility surface.
 
 ## Alpha receipt demo
 
@@ -40,6 +43,7 @@ assurance, or make support automation a product.
 Recommended QC commands:
 
 ```bash
+scripts/path_c_smoke.sh
 uv run profusion m8 demo support-triage-human-review
 uv run pytest tests/test_m8_gtm_receipt_harness.py
 uv run pytest
@@ -48,8 +52,13 @@ uv run profusion smoke --offline
 
 ## Current milestone
 
-See `STATUS.md` for milestone progress and `docs/runbooks/` for operations,
-handoff, recovery, and release checklists.
+P0 is implemented as a fixture-backed receipt harness. P1 is the
+receipt-derived HyperFrames demo path and has not started. P2 cockpit
+visibility is deferred and must remain read-only.
+
+See `STATUS.md` for milestone progress, `docs/ACTIVE_SURFACES.md` for the
+current repo boundary, and `docs/runbooks/` for operations, handoff, recovery,
+and release checklists.
 
 ## Architecture
 

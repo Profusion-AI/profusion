@@ -365,3 +365,31 @@ Receipt. Do not present the demo as generic support automation.
   required for the first prototype; realistic local JSON artifacts and a
   markdown receipt are acceptable if the evidence loop is durable and
   reproducible.
+
+## 2026-05-18 — M8-GTM QC cleanup boundary
+
+### P0/P0.1 proves without vendor submodules
+**Decision:** The public CI and Path C smoke path must prove the active
+M8-GTM receipt harness without checking out MoneyPrinterTurbo or
+MoneyPrinterV2 submodules.
+
+**Rationale:**
+- The current buyer-readable proof path is the Customer Trust Triage Receipt,
+  not live render/publish compatibility.
+- If P0/P0.1 requires vendor checkout, the Profusion / Attention Media Lab
+  split has leaked back into the active product lane.
+- Legacy vendor surfaces can remain frozen for historical compatibility while
+  active receipt work stays independently reproducible.
+
+### Local artifacts stay ignored by default
+**Decision:** Generated receipts, logs, exports, source packs, drafts,
+explorations, and scratch outputs are private/local artifacts unless a
+specific sanitized artifact is approved for public commit.
+
+**Rationale:**
+- The public repo should carry source, high-level plans, milestone notes,
+  runbooks, and sanitized examples.
+- Raw generated packets and exploratory work can contain private context or
+  confusing intermediate claims.
+- Keeping these paths ignored supports future P0.1 exploration without making
+  every local probe part of the public product surface.

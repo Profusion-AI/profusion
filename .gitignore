@@ -24,6 +24,25 @@ data/receipts/*
 !data/receipts/.gitkeep
 data/measurements/
 data/private/
+data/exports/
+data/explorations/
+data/source_packs/
+data/style/
+data/drafts/
+data/tmp/
+data/scratch/
+
+# Local exploration and generated demo outputs
+.codex/
+.local/
+.tmp/
+tmp/
+scratch/
+explorations/
+reports/local/
+artifacts/local/
+outputs/
+*.local.*
 
 # OS
 .DS_Store

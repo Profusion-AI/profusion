@@ -1,8 +1,23 @@
 # Profusion Pipeline Status
 
-## Current Project State: Profusion split from education/content engine; M7 locked; M7.5 receipt slice complete; M8 outcome observations in progress
+## Current Project State: Profusion split from education/content engine; M8-GTM P0 receipt harness complete; P1 not started
 
 As of 2026-05-17, Profusion is the B2B workflow-trust project. The real education/content engine, MoneyPrinterTurbo/MoneyPrinterV2 lineage, Substack package work, source packs, voice guides, and owned-media drafts now belong to `/home/kyle/attention-media-lab`. Profusion may keep a sanitized AI-assisted media/content demo only to explain receipt mechanics. The Profusion vendor submodules remain temporarily for legacy/demo compatibility; removal is deferred until fixture-backed demo receipts replace live render/publish.
+
+As of 2026-05-18, the active buyer-readable proof path is M8-GTM:
+
+```text
+P0 = CLI + durable artifacts + generated workflow receipt
+P1 = receipt-derived HyperFrames demo video
+P2 = optional read-only cockpit visibility
+```
+
+P0 is implemented and verified through the fixture-backed Customer Trust
+Triage Receipt harness. P1 is specified but not implemented. P2 remains
+deferred and must stay read-only if opened.
+
+The public repo surface map is `docs/ACTIVE_SURFACES.md`. The fresh-clone P0
+turnkey path is `docs/runbooks/path_c_turnkey_reproduction.md`.
 
 As of 2026-05-08, M6 remains functionally closed and M7 is locked as the
 internal operator cockpit milestone. M8 has now started as manual workflow
@@ -41,7 +56,56 @@ packets outside SQLite while the receipt format is still being validated.
 M7.5 first-slice smoke is documented in
 `docs/milestones/M7_5_REVIEWER_EVIDENCE_SMOKE_2026-05-03.md`.
 
-## Current Milestone: M6 — Agent-hardening: runbooks, idempotency, handoff — COMPLETE
+## Current Execution Track: M8-GTM P0 Complete; P0.1 / P1 Next
+
+### M8-GTM P0: Customer Trust Triage Receipt Harness — COMPLETE
+
+**Goal:** Prove that one AI-assisted workflow can produce a bounded,
+reviewer-readable receipt from captured local artifacts without live
+integrations or external credentials.
+
+**Implemented:**
+- `src/orchestrator/m8_gtm/` fixture-backed receipt harness
+- `uv run profusion m8 demo support-triage-human-review`
+- generated packet files:
+  `artifact_manifest.json`, `m8_observation.json`,
+  `workflow_receipt.json`, `workflow_receipt.md`, and
+  `workflow_receipt.html`
+- required sensitive-case human review event
+- supported claims, unsupported claims, limitations, and next review guidance
+- `.partial` packet write discipline before final rename
+- Path C smoke script and runbook for fresh-clone reproduction
+
+**Current no-claims boundary:**
+- no live n8n execution
+- no live Gmail, Slack, Sheets, HubSpot, or customer-message send
+- no compliance certification or legal assurance
+- no production readiness or customer traction claim
+- no support-automation product claim
+
+**Latest local verification on 2026-05-18:**
+- `uv run pytest -q`: 201 passed
+- `uv run profusion smoke --offline`: passed in the prior P0 closeout
+- `git diff --check`: passed in the prior P0 closeout
+
+### M8-GTM P1: Receipt-Derived HyperFrames Demo — NOT STARTED
+
+P1 should be implemented as a claim-controlled artifact compiler, not as a
+hand-authored marketing video.
+
+Required P1 outputs:
+- `demo_storyboard.md`
+- `hyperframes_video_manifest.json`
+- `customer_trust_triage_receipt.mp4`
+
+Every on-screen claim must source to `workflow_receipt.json`,
+`workflow_receipt.md`, `m8_observation.json`, or a storyboard generated from
+those files.
+
+### M8-GTM P2: Optional Cockpit Visibility — DEFERRED
+
+P2 must stay read-only. Do not expose approval buttons, scheduling,
+publishing, retries, or other mutation controls for buyer-facing demos.
 
 ### M6: Agent Hardening + Operational Durability — COMPLETE
 
