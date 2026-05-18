@@ -1,6 +1,7 @@
 """M8 file-first workflow outcome observation tests."""
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -18,6 +19,13 @@ from orchestrator.measurements import (
     record_measurement_observation,
 )
 from tests.test_publish import _seed_approved_item, _use_tmp_db
+
+
+ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _strip_ansi(text: str) -> str:
+    return ANSI_RE.sub("", text)
 
 
 def _use_measurement_tmp(monkeypatch, tmp_path: Path) -> Path:
@@ -292,17 +300,22 @@ def test_profusion_help_does_not_register_substack_command():
 
 
 def test_measure_record_help_prefers_generic_workflow_dimension_labels():
-    result = CliRunner().invoke(app, ["measure", "record", "--help"])
+    result = CliRunner().invoke(
+        app,
+        ["measure", "record", "--help"],
+        env={"COLUMNS": "120", "LINES": "80", "TERM": "xterm-256color"},
+    )
+    help_text = _strip_ansi(result.output)
 
     assert result.exit_code == 0
-    assert "--scenario-variant" in result.output
-    assert "--workflow-type" in result.output
-    assert "--trust-domain" in result.output
-    assert "Scenario variant" in result.output
-    assert "Workflow type" in result.output
-    assert "Trust domain" in result.output
-    assert "content format" not in result.output.lower()
-    assert "editorial pillar" not in result.output.lower()
+    assert "--scenario-variant" in help_text
+    assert "--workflow-type" in help_text
+    assert "--trust-domain" in help_text
+    assert "Scenario variant" in help_text
+    assert "Workflow type" in help_text
+    assert "Trust domain" in help_text
+    assert "content format" not in help_text.lower()
+    assert "editorial pillar" not in help_text.lower()
 
 
 def test_measure_record_cli_keeps_legacy_dimension_flags_hidden_but_accepted(monkeypatch, tmp_path):
