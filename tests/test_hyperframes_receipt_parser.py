@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
+from typer.testing import CliRunner
 
+from orchestrator.cli import app
 from orchestrator.m8_gtm.harness import generate_packet_from_runtime_payload
 from tests.test_m8_aice_runtime_payload import AICE_SLUG, sample_runtime_payload
 
@@ -418,3 +421,124 @@ def test_render_aice_hyperframes_view_is_validator_alias(tmp_path: Path):
     assert render_aice_hyperframes_view(
         model, local_url=local_url
     ) == render_aice_validator_view(model, local_url=local_url)
+
+
+def test_aice_hyperframes_app_serves_validator_model_receipt_and_artifact(
+    tmp_path: Path,
+):
+    from orchestrator.hyperframes_server import create_aice_hyperframes_app
+
+    packet_dir = make_runtime_packet(tmp_path)
+    client = TestClient(
+        create_aice_hyperframes_app(
+            packet_dir,
+            local_url="http://127.0.0.1:8765/",
+        )
+    )
+
+    root_response = client.get("/")
+    assert root_response.status_code == 200
+    assert "AICE Workflow Receipt Validator" in root_response.text
+    assert "Validated with limitations" in root_response.text
+    assert 'data-prof-demo="aice-validator"' in root_response.text
+
+    model_response = client.get("/api/model")
+    assert model_response.status_code == 200
+    model = model_response.json()
+    assert model["validation"]["validation_status"] == "validated_with_limitations"
+    assert model["receipt_path"] == packet_dir.name
+    assert all("path" not in artifact for artifact in model["artifacts"])
+
+    receipt_response = client.get("/receipt")
+    assert receipt_response.status_code == 200
+    assert "AICE Source-to-Narrative Workflow Receipt" in receipt_response.text
+
+    artifact_response = client.get("/artifacts/runtime_payload.json")
+    assert artifact_response.status_code == 200
+    assert artifact_response.json()["workflow_slug"] == AICE_SLUG
+
+    packet_receipt_response = client.get("/packet/workflow_receipt.json")
+    assert packet_receipt_response.status_code == 200
+    assert (
+        packet_receipt_response.json()["workflow_name"]
+        == "AICE Source-to-Narrative Workflow Receipt"
+    )
+
+    assert client.get("/packet/artifacts/runtime_payload.json").status_code == 200
+    assert client.get("/artifacts/../../workflow_receipt.json").status_code == 404
+    assert client.get("/packet/../../pyproject.toml").status_code == 404
+    assert client.get("/packet/%2e%2e/pyproject.toml").status_code == 404
+
+
+def test_hyperframes_validate_cli_dry_run_prints_validator_language(
+    tmp_path: Path,
+):
+    packet_dir = make_runtime_packet(tmp_path)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "hyperframes",
+            "validate",
+            "--receipt-dir",
+            str(packet_dir),
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8765",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "AICE Workflow Receipt Validator" in result.output
+    assert f"Receipt packet: {packet_dir.resolve()}" in result.output
+    assert "Validation status: validated_with_limitations" in result.output
+    assert "Workflow: AICE Source-to-Narrative Workflow Receipt" in result.output
+    assert "Execution ID: exec_runtime_aice_20260519" in result.output
+    assert "Node count: 7" in result.output
+    assert "Local URL: http://127.0.0.1:8765/" in result.output
+    assert "Open this first: http://127.0.0.1:8765/" in result.output
+    assert (
+        "Boundary: Local validator only; receipt remains source of truth."
+        in result.output
+    )
+
+
+def test_hyperframes_serve_cli_remains_compatibility_alias(tmp_path: Path):
+    packet_dir = make_runtime_packet(tmp_path)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "hyperframes",
+            "serve",
+            "--receipt-dir",
+            str(packet_dir),
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "AICE Workflow Receipt Validator" in result.output
+    assert "Validation status: validated_with_limitations" in result.output
+
+
+def test_hyperframes_validate_cli_rejects_non_loopback_host(tmp_path: Path):
+    packet_dir = make_runtime_packet(tmp_path)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "hyperframes",
+            "validate",
+            "--receipt-dir",
+            str(packet_dir),
+            "--host",
+            "0.0.0.0",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "PR5 validator only binds to 127.0.0.1" in result.output
