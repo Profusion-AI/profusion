@@ -9,6 +9,8 @@ from typer.testing import CliRunner
 
 from orchestrator.cli import app
 from orchestrator.m8_gtm.harness import generate_packet_from_runtime_payload
+from orchestrator.m8_gtm.runtime_payloads import validate_aice_runtime_payload
+from orchestrator.m8_gtm.schemas import FixtureValidationError
 
 
 AICE_SLUG = "aice-source-to-narrative-receipt"
@@ -150,7 +152,10 @@ def test_generate_packet_from_runtime_payload_uses_runtime_values(tmp_path: Path
     assert len(observation["n8n_execution"]["nodes_executed"]) >= 3
     assert any(row["artifact_type"] == "runtime_payload" for row in manifest["artifacts"])
     assert any("workspace runtime payload" in claim for claim in receipt["claims_supported"])
-    assert any("Workspace proof uses controlled runtime metadata" in item for item in receipt["limitations"])
+    assert any(
+        "Workspace proof uses controlled runtime metadata" in item
+        for item in receipt["limitations"]
+    )
 
 
 def test_generate_packet_from_runtime_payload_rejects_media_download_claim(
@@ -165,6 +170,65 @@ def test_generate_packet_from_runtime_payload_rejects_media_download_claim(
         assert "must not download audio/video" in str(exc)
     else:
         raise AssertionError("runtime payload with downloaded media should fail")
+
+
+def test_runtime_payload_requires_core_editorial_fields():
+    invalid_payloads = []
+
+    missing_topic_title = sample_runtime_payload()
+    del missing_topic_title["topic_brief"]["title"]
+    invalid_payloads.append((missing_topic_title, "topic_brief.title"))
+
+    missing_editorial_question = sample_runtime_payload()
+    del missing_editorial_question["topic_brief"]["editorial_question"]
+    invalid_payloads.append((missing_editorial_question, "topic_brief.editorial_question"))
+
+    missing_reviewer = sample_runtime_payload()
+    del missing_reviewer["human_editorial_review"]["reviewer"]
+    invalid_payloads.append((missing_reviewer, "human_editorial_review.reviewer"))
+
+    empty_reviewed_artifacts = sample_runtime_payload()
+    empty_reviewed_artifacts["human_editorial_review"]["reviewed_artifacts"] = []
+    invalid_payloads.append(
+        (empty_reviewed_artifacts, "human_editorial_review.reviewed_artifacts")
+    )
+
+    missing_allowed_use = sample_runtime_payload()
+    del missing_allowed_use["narrative_brief"]["allowed_use"]
+    invalid_payloads.append((missing_allowed_use, "narrative_brief.allowed_use"))
+
+    empty_rights_items = sample_runtime_payload()
+    empty_rights_items["rights_review"]["items"] = []
+    invalid_payloads.append((empty_rights_items, "rights_review.items"))
+
+    for payload, expected_message in invalid_payloads:
+        try:
+            validate_aice_runtime_payload(payload)
+        except FixtureValidationError as exc:
+            assert expected_message in str(exc)
+        else:
+            raise AssertionError(f"{expected_message} should be required")
+
+
+def test_runtime_receipt_markdown_and_html_render_structured_sections(tmp_path: Path):
+    result = generate_packet_from_runtime_payload(
+        AICE_SLUG,
+        sample_runtime_payload(),
+        output_root=tmp_path,
+    )
+
+    packet_dir = Path(result["packet_dir"])
+    markdown = (packet_dir / "workflow_receipt.md").read_text(encoding="utf-8")
+    html = (packet_dir / "workflow_receipt.html").read_text(encoding="utf-8")
+
+    assert "{'source_id'" not in markdown
+    assert "{'claim_id'" not in markdown
+    assert "{'rights_review'" not in markdown
+    assert "&#x27;source_id&#x27;" not in html
+    assert "&#x27;claim_id&#x27;" not in html
+    assert "&#x27;rights_review&#x27;" not in html
+    assert "Source ID: runtime-source-1" in markdown
+    assert "<strong>Source ID:</strong> runtime-source-1" in html
 
 
 def test_m8_generate_from_payload_cli_writes_runtime_receipt(tmp_path: Path):

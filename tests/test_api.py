@@ -226,7 +226,16 @@ def _aice_runtime_payload() -> dict:
                 "workflow_signal": "API request preserved runtime IDs.",
             }
         ],
-        "rights_review": {"status": "review_required", "items": []},
+        "rights_review": {
+            "status": "review_required",
+            "items": [
+                {
+                    "source_id": "api-source-1",
+                    "classification": "metadata_reference_only",
+                    "decision": "do_not_download_or_publish",
+                }
+            ],
+        },
         "ambiguity_register": [
             {
                 "ambiguity_id": "api-ambiguity-1",

@@ -174,7 +174,7 @@ def render_receipt_html(receipt: dict[str, Any]) -> str:
 
 
 def _markdown_list(values: list[Any]) -> list[str]:
-    return [f"- {value}" for value in values]
+    return [f"- {_markdown_value(value)}" for value in values]
 
 
 def _extend_optional_markdown_section(
@@ -200,7 +200,10 @@ def _artifact_list(values: list[dict[str, Any]]) -> list[str]:
 
 
 def _key_value_list(values: dict[str, Any]) -> list[str]:
-    return [f"- {key}: {value}" for key, value in values.items()]
+    return [
+        f"- {_label_key(str(key))}: {_markdown_value(value)}"
+        for key, value in values.items()
+    ]
 
 
 def _section(title: str, body: str) -> str:
@@ -216,7 +219,7 @@ def _optional_section(title: str, value: Any) -> str:
 
 
 def _html_list(values: list[Any]) -> str:
-    items = "\n".join(f"      <li>{escape(str(value))}</li>" for value in values)
+    items = "\n".join(f"      <li>{_html_value(value)}</li>" for value in values)
     return f"<ul>\n{items}\n    </ul>"
 
 
@@ -234,7 +237,50 @@ def _html_artifacts(values: list[dict[str, Any]]) -> str:
 
 def _html_key_values(values: dict[str, Any]) -> str:
     items = "\n".join(
-        f"      <li><strong>{escape(str(key))}:</strong> {escape(str(value))}</li>"
+        f"      <li><strong>{escape(_label_key(str(key)))}:</strong> {_html_value(value)}</li>"
         for key, value in values.items()
     )
     return f"<ul>\n{items}\n    </ul>"
+
+
+def _markdown_value(value: Any) -> str:
+    if isinstance(value, dict):
+        return "; ".join(
+            f"{_label_key(str(key))}: {_markdown_value(nested)}"
+            for key, nested in value.items()
+        )
+    if isinstance(value, list):
+        return ", ".join(_markdown_value(item) for item in value)
+    if value is None:
+        return "None"
+    return str(value)
+
+
+def _html_value(value: Any) -> str:
+    if isinstance(value, dict):
+        return "; ".join(
+            f"<strong>{escape(_label_key(str(key)))}:</strong> {_html_value(nested)}"
+            for key, nested in value.items()
+        )
+    if isinstance(value, list):
+        return ", ".join(_html_value(item) for item in value)
+    if value is None:
+        return "None"
+    return escape(str(value))
+
+
+def _label_key(key: str) -> str:
+    special = {
+        "ai": "AI",
+        "api": "API",
+        "html": "HTML",
+        "id": "ID",
+        "json": "JSON",
+        "n8n": "n8n",
+        "qa": "QA",
+        "url": "URL",
+    }
+    return " ".join(
+        special.get(part.lower(), part.replace("-", " ").capitalize())
+        for part in key.split("_")
+    )

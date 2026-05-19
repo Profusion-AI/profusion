@@ -68,6 +68,52 @@ def validate_aice_runtime_payload(payload: dict[str, Any]) -> dict[str, Any]:
     normalized["ambiguity_register"] = _normalize_list_container(
         normalized["ambiguity_register"], "ambiguities", "ambiguity_register"
     )
+    normalized.setdefault(
+        "limitations",
+        [
+            "No third-party media downloaded.",
+            (
+                "Receipt does not certify factual truth, copyright clearance, "
+                "fair use, platform compliance, journalistic neutrality, or "
+                "publication safety."
+            ),
+        ],
+    )
+
+    topic = _require_mapping(normalized["topic_brief"], "topic_brief")
+    _require_text(topic, "title", "topic_brief.title")
+    _require_text(topic, "editorial_question", "topic_brief.editorial_question")
+
+    human_review = _require_mapping(
+        normalized["human_editorial_review"], "human_editorial_review"
+    )
+    _require_text(human_review, "reviewer", "human_editorial_review.reviewer")
+    _require_text(human_review, "decision", "human_editorial_review.decision")
+    _require_non_empty_list(
+        human_review.get("reviewed_artifacts"),
+        "human_editorial_review.reviewed_artifacts",
+    )
+
+    narrative = _require_mapping(normalized["narrative_brief"], "narrative_brief")
+    _require_text(narrative, "allowed_use", "narrative_brief.allowed_use")
+
+    rights_review = _require_mapping(normalized["rights_review"], "rights_review")
+    _require_text(rights_review, "status", "rights_review.status")
+    rights_items = rights_review.get("items")
+    if not isinstance(rights_items, list):
+        raise FixtureValidationError("runtime payload rights_review.items must be a list")
+    if not rights_items and not _has_no_rights_items_limitation(
+        normalized["limitations"]
+    ):
+        raise FixtureValidationError(
+            "runtime payload rights_review.items requires at least one item "
+            "or an explicit no-rights-items limitation"
+        )
+    for item in rights_items:
+        if not isinstance(item, dict):
+            raise FixtureValidationError(
+                "runtime payload rights_review.items entries must be objects"
+            )
 
     quotes = normalized["quote_candidates"]["quote_candidates"]
     if not quotes:
@@ -97,17 +143,6 @@ def validate_aice_runtime_payload(payload: dict[str, Any]) -> dict[str, Any]:
 
     normalized["node_count"] = node_count
     normalized["evidence_mode"] = WORKSPACE_RUNTIME_EVIDENCE_MODE
-    normalized.setdefault(
-        "limitations",
-        [
-            "No third-party media downloaded.",
-            (
-                "Receipt does not certify factual truth, copyright clearance, "
-                "fair use, platform compliance, journalistic neutrality, or "
-                "publication safety."
-            ),
-        ],
-    )
     return normalized
 
 
@@ -126,3 +161,35 @@ def _normalize_list_container(
         if not isinstance(item, dict):
             raise FixtureValidationError(f"runtime payload {label} entries must be objects")
     return {key: items}
+
+
+def _require_mapping(value: object, label: str) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise FixtureValidationError(f"runtime payload {label} must be an object")
+    return value
+
+
+def _require_text(row: dict[str, Any], key: str, label: str) -> None:
+    value = row.get(key)
+    if not isinstance(value, str) or not value.strip():
+        raise FixtureValidationError(f"runtime payload {label} is required")
+
+
+def _require_non_empty_list(value: object, label: str) -> None:
+    if not isinstance(value, list) or not value:
+        raise FixtureValidationError(f"runtime payload {label} must be a non-empty list")
+
+
+def _has_no_rights_items_limitation(limitations: object) -> bool:
+    if not isinstance(limitations, list):
+        return False
+    for item in limitations:
+        if not isinstance(item, str):
+            continue
+        normalized = item.lower().replace("_", " ")
+        if (
+            "no rights review items" in normalized
+            or "rights review items intentionally empty" in normalized
+        ):
+            return True
+    return False

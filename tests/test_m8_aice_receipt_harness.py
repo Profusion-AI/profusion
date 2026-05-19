@@ -17,6 +17,9 @@ AICE_WORKFLOW_SLUG = "aice-source-to-narrative-receipt"
 N8N_WORKFLOW_PATH = Path(
     "examples/n8n/aice-source-to-narrative-receipt.workflow.json"
 )
+N8N_WORKSPACE_WORKFLOW_PATH = Path(
+    "examples/n8n/aice-source-to-narrative-workspace-proof.workflow.json"
+)
 REQUIRED_RECEIPT_FILES = {
     "artifact_manifest.json",
     "m8_observation.json",
@@ -212,6 +215,23 @@ def test_aice_n8n_workflow_export_matches_receipt_contract():
     receipt_code = receipt_node["parameters"]["jsCode"]
     assert "uv run profusion m8 demo aice-source-to-narrative-receipt" in receipt_code
     assert "--output-dir /tmp/profusion-aice-p0-1" in receipt_code
+
+
+def test_aice_workspace_workflow_export_is_runtime_payload_proof():
+    workflow = json.loads(N8N_WORKSPACE_WORKFLOW_PATH.read_text(encoding="utf-8"))
+    node_names = [node["name"] for node in workflow["nodes"]]
+    workflow_text = json.dumps(workflow)
+
+    assert workflow["name"] == "AICE Source-to-Narrative Receipt - Workspace Proof"
+    assert workflow["active"] is False
+    assert "Manual Trigger" in node_names
+    assert "Build Topic Brief" in node_names
+    assert "Return Runtime Payload for Profusion" in node_names
+    assert "n8n_workspace_workflow_id" in workflow_text
+    assert "nodes_executed" in workflow_text
+    assert "uv run profusion m8 demo" not in workflow_text
+    assert "child_process" not in workflow_text
+    assert "/home/kyle/profusion" not in workflow_text
 
 
 def test_aice_receipt_preserves_ambiguity_and_no_claims(tmp_path):

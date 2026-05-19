@@ -24,6 +24,19 @@
 - Kyle approved target n8n project: `AttentionIntelligence-ContentEngine`.
 - Kyle instructed PR4 should not branch; execution stayed on `codex/p0-1-1-aice-live-receipt`.
 
+## Release Cleanup Update
+
+- PR #3 now carries the P0.1.2 workspace-runtime proof on the same branch.
+- Cleanup pass separates the committed local fixture-backed n8n demo from the
+  workspace-runtime proof export.
+- Runtime payload validation is tightened for topic brief, rights review, human
+  editorial review, and narrative-use fields.
+- Receipt rendering is tightened so buyer-readable Markdown/HTML avoid raw
+  Python object strings for runtime source cards, claims, rights review, and
+  ambiguity data.
+- API exposure remains local-only until a token guard, project/workflow
+  allowlist, payload-size limit, and redaction policy are implemented.
+
 ## File Structure
 
 - Modify `src/orchestrator/m8_gtm/harness.py`: add runtime-payload packet generation while preserving `generate_demo_packet`.

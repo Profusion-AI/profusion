@@ -24,6 +24,13 @@ that payload through the new runtime ingestion path.
   a reachable Profusion API URL exists.
 - Added tests proving runtime payload values appear in the generated receipt.
 - Created and executed the workspace workflow in the approved n8n project.
+- Added a sanitized workspace-proof n8n workflow export under `examples/n8n/`
+  to distinguish runtime-payload proof from the older local fixture demo.
+- Tightened runtime payload validation for topic brief, rights review, human
+  editorial review, and narrative-use fields.
+- Improved receipt Markdown/HTML rendering so source cards, claims, rights
+  review, and ambiguity records render as readable field/value rows instead of
+  Python object strings.
 
 ## Workspace Proof
 
@@ -84,6 +91,24 @@ The receipt records:
 - unsupported claims
 - limitations
 
+## Repo Demo Artifacts
+
+The repo now intentionally carries two different n8n example files:
+
+```text
+examples/n8n/aice-source-to-narrative-receipt.workflow.json
+examples/n8n/aice-source-to-narrative-workspace-proof.workflow.json
+```
+
+The first file is the local child-process fixture-backed demo. It calls
+`uv run profusion m8 demo aice-source-to-narrative-receipt` and therefore loads
+committed fixture files.
+
+The second file is the sanitized workspace-runtime proof export. It does not
+call `child_process`, does not assume `/home/kyle/profusion`, and returns a
+runtime payload that can be passed to `profusion m8 generate-from-payload` or
+the local API route.
+
 ## Supported Claims
 
 - The n8n workspace workflow executed and returned a workspace runtime payload
@@ -116,6 +141,15 @@ n8n workspace -> HTTP Request -> reachable Profusion receipt API
 This closeout intentionally avoided exposing Kyle's local API through a public
 tunnel. The implemented API endpoint and runtime CLI now support that direct
 HTTP path once a governed network route exists.
+
+Before any tunnel, public domain, or cloud route exposes
+`POST /api/m8/aice/receipt`, add at minimum:
+
+- `PROFUSION_AICE_RECEIPT_TOKEN`
+- `Authorization: Bearer <token>`
+- n8n project or workflow allowlisting
+- payload-size limits
+- source/review-data redaction rules
 
 ## Verification
 
