@@ -108,10 +108,12 @@ def load_aice_hyperframe_model(receipt_dir: Path | str) -> dict[str, Any]:
         or len(_list_value(n8n_execution.get("nodes_executed"))),
         "status": _string_value(n8n_execution.get("status")) or "unknown",
     }
+    receipt_id = _string_value(receipt.get("receipt_id")) or root.name
 
     return {
-        "receipt_id": _string_value(receipt.get("receipt_id")) or root.name,
+        "receipt_id": receipt_id,
         "receipt_path": str(root),
+        "receipt": {"id": receipt_id, "path": str(root)},
         "validator_title": VALIDATOR_TITLE,
         "validator_subtitle": VALIDATOR_SUBTITLE,
         "workflow": workflow,
@@ -122,6 +124,7 @@ def load_aice_hyperframe_model(receipt_dir: Path | str) -> dict[str, Any]:
         "receipt_sections": _build_receipt_sections(receipt),
         "supported_claims": supported_claims,
         "unsupported_claims": unsupported_claims,
+        "claims": {"supported": supported_claims, "unsupported": unsupported_claims},
         "limitations": limitations,
         "founder_claim": SAFE_FOUNDER_CLAIM,
         "product_safe_explanation": PRODUCT_SAFE_EXPLANATION,

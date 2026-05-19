@@ -34,6 +34,10 @@ def test_load_aice_validator_model_normalizes_and_validates_good_packet(
     model = load_aice_hyperframe_model(packet_dir)
 
     assert model["receipt_id"].startswith("receipt-")
+    assert model["receipt"] == {
+        "id": model["receipt_id"],
+        "path": str(packet_dir.resolve()),
+    }
     assert model["workflow"]["name"] == "AICE Source-to-Narrative Workflow Receipt"
     assert model["workflow"]["slug"] == AICE_SLUG
     assert model["workflow"]["evidence_mode"] == "workspace_runtime_n8n_payload"
@@ -77,6 +81,8 @@ def test_load_aice_validator_model_normalizes_and_validates_good_packet(
         "m8_observation.json",
         "artifact_manifest.json",
     }.issubset(artifact_paths)
+    assert model["claims"]["supported"] == model["supported_claims"]
+    assert model["claims"]["unsupported"] == model["unsupported_claims"]
     assert model["verification"]["safe_founder_claim"] == SAFE_FOUNDER_CLAIM
 
 
