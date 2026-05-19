@@ -353,6 +353,59 @@ def test_render_aice_validator_view_uses_packet_relative_links_only(tmp_path: Pa
             assert artifact["href"] in html
 
 
+def test_render_aice_validator_view_rejects_unsafe_model_artifact_hrefs(
+    tmp_path: Path,
+):
+    from orchestrator.hyperframes_receipts import load_aice_hyperframe_model
+    from orchestrator.hyperframes_receipts import render_aice_validator_view
+
+    packet_dir = make_runtime_packet(tmp_path)
+    model = load_aice_hyperframe_model(packet_dir)
+    unsafe_hrefs = [
+        "/packet/../outside.json",
+        "/packet/%2e%2e/outside.json",
+        "/packet/foo\\bar.json",
+        "/packet/foo\x00bar.json",
+        "https://example.com/packet/runtime_payload.json",
+        "//example.com/packet/runtime_payload.json",
+    ]
+    model["artifacts"] = [
+        {
+            "artifact_id": f"unsafe-{index}",
+            "artifact_type": "runtime_payload",
+            "description": "Unsafe injected artifact href.",
+            "packet_path": f"unsafe-{index}.json",
+            "exists": True,
+            "href": href,
+        }
+        for index, href in enumerate(unsafe_hrefs)
+    ]
+
+    html = render_aice_validator_view(model, local_url="http://127.0.0.1:8765/")
+
+    for href in unsafe_hrefs:
+        assert href not in html
+    assert html.count("unavailable") >= len(unsafe_hrefs)
+
+
+def test_render_aice_validator_view_marks_missing_human_review_gate(
+    tmp_path: Path,
+):
+    from orchestrator.hyperframes_receipts import load_aice_hyperframe_model
+    from orchestrator.hyperframes_receipts import render_aice_validator_view
+
+    packet_dir = make_runtime_packet(tmp_path)
+    model = load_aice_hyperframe_model(packet_dir)
+    for artifact in model["artifacts"]:
+        if artifact["artifact_type"] == "human_editorial_review":
+            artifact["exists"] = False
+
+    html = render_aice_validator_view(model, local_url="http://127.0.0.1:8765/")
+
+    assert "Human Editorial Review Gate" in html
+    assert "missing" in html
+
+
 def test_render_aice_hyperframes_view_is_validator_alias(tmp_path: Path):
     from orchestrator.hyperframes_receipts import load_aice_hyperframe_model
     from orchestrator.hyperframes_receipts import render_aice_hyperframes_view

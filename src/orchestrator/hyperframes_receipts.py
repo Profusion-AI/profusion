@@ -8,7 +8,7 @@ import json
 import re
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 VALIDATOR_TITLE = "AICE Workflow Receipt Validator"
 VALIDATOR_SUBTITLE = "HyperFrames Explorer for one completed Profusion receipt packet"
@@ -316,11 +316,7 @@ def _human_review_gate(model: dict[str, Any]) -> str:
         and artifact.get("artifact_type") == "human_editorial_review"
     ]
     rows = "\n".join(
-        f"""
-        <li>
-          <strong>{escape_text(artifact.get("description") or "Human Editorial Review Gate")}</strong>
-          <span>{escape_text(artifact.get("packet_path"))}</span>
-        </li>"""
+        _human_review_artifact_row(artifact)
         for artifact in artifacts
     ) or "<li><strong>Human Editorial Review Gate</strong><span>missing</span></li>"
     return f"""
@@ -330,6 +326,15 @@ def _human_review_gate(model: dict[str, Any]) -> str:
       <p class="section-note">A recorded human review gate is required before founder-facing claims are treated as reviewable evidence.</p>
       <ul class="compact-list">{rows}</ul>
     </section>"""
+
+
+def _human_review_artifact_row(artifact: dict[str, Any]) -> str:
+    status = "recorded" if artifact.get("exists") is True else "missing"
+    return f"""
+        <li>
+          <strong>{escape_text(artifact.get("description") or "Human Editorial Review Gate")}</strong>
+          <span>{escape_text(artifact.get("packet_path"))} · {escape_text(status)}</span>
+        </li>"""
 
 
 def _claim_boundary(model: dict[str, Any]) -> str:
@@ -531,7 +536,24 @@ def _artifact_row(artifact: dict[str, Any]) -> str:
 
 
 def _safe_artifact_href(href: str) -> bool:
-    return href.startswith("/packet/") and not href.startswith("//")
+    if (
+        not href.startswith("/packet/")
+        or href.startswith("//")
+        or "://" in href
+        or any(ord(char) < 32 or char == "\\" for char in href)
+    ):
+        return False
+
+    relative = href[len("/packet/") :]
+    if not relative or relative.startswith("/"):
+        return False
+
+    decoded = unquote(relative)
+    if any(ord(char) < 32 or char == "\\" for char in decoded):
+        return False
+
+    parts = [part for part in decoded.split("/") if part not in {"", "."}]
+    return bool(parts) and all(part != ".." for part in parts)
 
 
 def _validator_css() -> str:
