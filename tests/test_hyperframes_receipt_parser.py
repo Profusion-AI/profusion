@@ -261,3 +261,87 @@ def test_load_aice_validator_model_fails_on_unsafe_manifest_path(tmp_path: Path)
         finding["severity"] == "fail" and finding["code"] == "path_safety_passed"
         for finding in model["validation"]["validation_findings"]
     )
+
+
+def test_render_aice_validator_view_includes_scene_ready_validator_sections(
+    tmp_path: Path,
+):
+    from orchestrator.hyperframes_receipts import load_aice_hyperframe_model
+    from orchestrator.hyperframes_receipts import render_aice_validator_view
+
+    packet_dir = make_runtime_packet(tmp_path)
+    model = load_aice_hyperframe_model(packet_dir)
+
+    html = render_aice_validator_view(model, local_url="http://127.0.0.1:8765/")
+
+    assert "AICE Workflow Receipt Validator" in html
+    assert "HyperFrames Explorer for one completed Profusion receipt packet" in html
+    assert "Validated with limitations" in html
+    assert (
+        "This n8n workflow ran. Profusion preserved what happened. The receipt tells "
+        "you what the evidence supports and what it does not."
+    ) in html
+    assert "7 nodes executed" in html
+    assert "6 receipt artifacts found" in html
+    assert "2 claim boundaries present" in html
+    assert "1 human review gate recorded" in html
+    assert "Human Editorial Review Gate" in html
+    assert "Execution" in html
+    assert "Evidence" in html
+    assert "Receipt" in html
+    assert (
+        "AICE workflow map derived from recorded node trail and receipt artifacts."
+    ) in html
+    assert "Artifact Ledger" in html
+    assert "Open finished receipt" in html
+    assert "Supported Claims" in html
+    assert "Unsupported Claims" in html
+    assert "Limitations" in html
+    assert "Validation Findings" in html
+    assert "Founder Proof Summary" in html
+    assert "Copy Founder Proof Summary" in html
+    assert "copyFounderProofSummary" in html
+    assert 'data-prof-demo="aice-validator"' in html
+    assert 'data-scene="validation-header"' in html
+    assert 'data-scene="workflow-replay"' in html
+    assert 'data-scene="human-review-gate"' in html
+    assert 'data-scene="claim-boundary"' in html
+    assert 'data-scene="artifact-ledger"' in html
+    assert 'data-scene="founder-summary"' in html
+    assert "/packet/artifacts/runtime_payload.json" in html
+    assert "/receipt" in html
+    assert "data-start=" not in html
+    assert "data-duration=" not in html
+
+
+def test_render_aice_validator_view_escapes_receipt_text(tmp_path: Path):
+    from orchestrator.hyperframes_receipts import load_aice_hyperframe_model
+    from orchestrator.hyperframes_receipts import render_aice_validator_view
+
+    packet_dir = make_runtime_packet(tmp_path)
+    model = load_aice_hyperframe_model(packet_dir)
+    model["workflow"]["name"] = "<script>alert('bad')</script>"
+    model["supported_claims"].append("<img src=x onerror=alert(1)>")
+
+    html = render_aice_validator_view(model, local_url="http://127.0.0.1:8765/")
+
+    assert "<script>alert('bad')</script>" not in html
+    assert "<img src=x onerror=alert(1)>" not in html
+    assert "&lt;script&gt;alert(&#x27;bad&#x27;)&lt;/script&gt;" in html
+    assert "&lt;img src=x onerror=alert(1)&gt;" in html
+
+
+def test_render_aice_validator_view_uses_packet_relative_links_only(tmp_path: Path):
+    from orchestrator.hyperframes_receipts import load_aice_hyperframe_model
+    from orchestrator.hyperframes_receipts import render_aice_validator_view
+
+    packet_dir = make_runtime_packet(tmp_path)
+    model = load_aice_hyperframe_model(packet_dir)
+
+    html = render_aice_validator_view(model, local_url="http://127.0.0.1:8765/")
+
+    assert str(packet_dir.resolve()) not in html
+    assert "/packet/" in html
+    for artifact in model["artifacts"]:
+        if artifact["href"]:
+            assert artifact["href"] in html
