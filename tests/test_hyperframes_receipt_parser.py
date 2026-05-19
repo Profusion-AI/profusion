@@ -34,9 +34,10 @@ def test_load_aice_validator_model_normalizes_and_validates_good_packet(
     model = load_aice_hyperframe_model(packet_dir)
 
     assert model["receipt_id"].startswith("receipt-")
+    assert model["receipt_path"] == packet_dir.name
     assert model["receipt"] == {
         "id": model["receipt_id"],
-        "path": str(packet_dir.resolve()),
+        "packet_path": packet_dir.name,
     }
     assert model["workflow"]["name"] == "AICE Source-to-Narrative Workflow Receipt"
     assert model["workflow"]["slug"] == AICE_SLUG
@@ -81,6 +82,12 @@ def test_load_aice_validator_model_normalizes_and_validates_good_packet(
         "m8_observation.json",
         "artifact_manifest.json",
     }.issubset(artifact_paths)
+    assert all("path" not in artifact for artifact in model["artifacts"])
+    assert all(
+        artifact["href"].startswith("/packet/")
+        for artifact in model["artifacts"]
+        if artifact["exists"]
+    )
     assert model["claims"]["supported"] == model["supported_claims"]
     assert model["claims"]["unsupported"] == model["unsupported_claims"]
     assert model["verification"]["safe_founder_claim"] == SAFE_FOUNDER_CLAIM
@@ -244,6 +251,12 @@ def test_load_aice_validator_model_fails_on_unsafe_manifest_path(tmp_path: Path)
 
     assert model["validation"]["validation_status"] == "validation_failed"
     assert model["validation"]["path_safety_passed"] is False
+    unsafe_artifact = next(
+        artifact
+        for artifact in model["artifacts"]
+        if artifact["packet_path"] == "../outside.json"
+    )
+    assert unsafe_artifact["href"] is None
     assert any(
         finding["severity"] == "fail" and finding["code"] == "path_safety_passed"
         for finding in model["validation"]["validation_findings"]

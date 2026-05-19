@@ -8,6 +8,7 @@ import json
 import re
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 VALIDATOR_TITLE = "AICE Workflow Receipt Validator"
 VALIDATOR_SUBTITLE = "HyperFrames Explorer for one completed Profusion receipt packet"
@@ -113,8 +114,8 @@ def load_aice_hyperframe_model(receipt_dir: Path | str) -> dict[str, Any]:
 
     return {
         "receipt_id": receipt_id,
-        "receipt_path": str(root),
-        "receipt": {"id": receipt_id, "path": str(root)},
+        "receipt_path": root.name,
+        "receipt": {"id": receipt_id, "packet_path": root.name},
         "validator_title": VALIDATOR_TITLE,
         "validator_subtitle": VALIDATOR_SUBTITLE,
         "workflow": workflow,
@@ -212,7 +213,8 @@ def _build_artifacts(root: Path, manifest: dict[str, Any]) -> list[dict[str, Any
             continue
         packet_path = _string_value(row.get("packet_path"))
         resolved = _safe_resolve(root, packet_path) if packet_path else None
-        exists = bool(resolved and resolved.is_file() and _is_relative_to(resolved, root))
+        safe_path = _is_safe_relative_packet_path(root, packet_path, resolved)
+        exists = bool(safe_path and resolved and resolved.is_file())
         seen_paths.add(packet_path)
         artifacts.append(
             {
@@ -222,7 +224,7 @@ def _build_artifacts(root: Path, manifest: dict[str, Any]) -> list[dict[str, Any
                 "packet_path": packet_path,
                 "sha256": _string_value(row.get("sha256")) or None,
                 "exists": exists,
-                "path": str(resolved) if resolved and _is_relative_to(resolved, root) else None,
+                "href": _packet_href(packet_path) if safe_path else None,
                 "manifest_listed": True,
             }
         )
@@ -239,7 +241,7 @@ def _build_artifacts(root: Path, manifest: dict[str, Any]) -> list[dict[str, Any
                 "packet_path": rel,
                 "sha256": _sha256(path) if path.is_file() else None,
                 "exists": path.is_file(),
-                "path": str(path.resolve()) if path.exists() else str(path),
+                "href": _packet_href(rel),
                 "manifest_listed": False,
             }
         )
@@ -614,6 +616,23 @@ def _safe_resolve(root: Path, packet_path: str) -> Path | None:
     if candidate.is_absolute():
         return candidate.resolve()
     return (root / candidate).resolve()
+
+
+def _is_safe_relative_packet_path(
+    root: Path,
+    packet_path: str,
+    resolved: Path | None,
+) -> bool:
+    return bool(
+        packet_path
+        and not Path(packet_path).is_absolute()
+        and resolved
+        and _is_relative_to(resolved, root)
+    )
+
+
+def _packet_href(packet_path: str) -> str:
+    return "/packet/" + quote(packet_path, safe="/")
 
 
 def _is_relative_to(path: Path, root: Path) -> bool:
