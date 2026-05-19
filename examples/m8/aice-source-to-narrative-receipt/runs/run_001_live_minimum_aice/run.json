@@ -1,0 +1,50 @@
+{
+  "run_id": "run_001_live_minimum_aice",
+  "case_id": "live_minimum_aice",
+  "case_name": "Minimum AICE source-to-narrative run",
+  "workflow_slug": "aice-source-to-narrative-receipt",
+  "started_at": "2026-05-18T22:30:00Z",
+  "completed_at": "2026-05-18T22:36:40Z",
+  "evidence_mode": "fixture_backed_live_n8n_demo",
+  "topic_artifact": "../../topic_brief.json",
+  "source_policy_artifact": "../../source_policy.json",
+  "artifact_sequence": [
+    "source_cards.json",
+    "quote_candidates.json",
+    "claim_map.json",
+    "attention_intelligence_map.json",
+    "rights_review.json",
+    "ambiguity_register.json",
+    "human_editorial_review.json",
+    "narrative_brief.json",
+    "visual_plan.json",
+    "execution_log.json",
+    "n8n_run_summary.json"
+  ],
+  "ai_actions": [
+    {
+      "action": "summarize_source_cards",
+      "input_artifact": "source_cards.json",
+      "output_artifact": "quote_candidates.json",
+      "risk_signal": "copyright_and_context_risk"
+    },
+    {
+      "action": "map_claims_to_sources",
+      "input_artifact": "quote_candidates.json",
+      "output_artifact": "claim_map.json",
+      "risk_signal": "unsupported_claim_risk"
+    },
+    {
+      "action": "draft_narrative_brief",
+      "input_artifact": "claim_map.json",
+      "output_artifact": "narrative_brief.json",
+      "risk_signal": "public_overclaim_risk"
+    }
+  ],
+  "human_review_required": true,
+  "outcome": "Narrative brief marked ready for internal demo review only after rights, ambiguity, and human editorial review artifacts were recorded.",
+  "failure_or_retry_state": {
+    "status": "none",
+    "details": "No failure or retry occurred in the fixture run."
+  }
+}

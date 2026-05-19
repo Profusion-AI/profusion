@@ -1,0 +1,183 @@
+{
+  "id": "aiceSourceNarrativeWorkspaceProof",
+  "name": "AICE Source-to-Narrative Receipt - Workspace Proof",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "nodes": [
+    {
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "build-topic-brief",
+      "name": "Build Topic Brief",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const executedAt = new Date().toISOString();\nreturn [{ json: {\n  workflow_slug: 'aice-source-to-narrative-receipt',\n  executed_at: executedAt,\n  topic_brief: {\n    title: 'Workspace AICE runtime proof 2026-05-19',\n    editorial_question: 'Can Kyle n8n workspace runtime data generate a Profusion receipt?',\n    working_thesis: 'A workspace execution can carry source, claim, ambiguity, and human review data into a Profusion runtime receipt.'\n  }\n} }];"
+      }
+    },
+    {
+      "id": "build-source-cards",
+      "name": "Build Source Cards",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const input = $input.first().json;\nreturn [{ json: {\n  ...input,\n  source_cards: [\n    {\n      source_id: 'workspace-source-1',\n      title: 'n8n workspace execution metadata',\n      source_type: 'workspace_runtime_metadata',\n      url: null,\n      captured_claims: ['The AICE proof ran through Kyle n8n workspace.'],\n      storage_mode: 'metadata_only'\n    }\n  ]\n} }];"
+      }
+    },
+    {
+      "id": "extract-claim-and-quote-candidates",
+      "name": "Extract Claim and Quote Candidates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const input = $input.first().json;\nreturn [{ json: {\n  ...input,\n  quote_candidates: [\n    {\n      quote_id: 'workspace-quote-1',\n      source_id: 'workspace-source-1',\n      source_label: 'n8n workspace execution metadata',\n      segment_summary: 'Workspace execution produced metadata-only AICE runtime evidence.',\n      storage_mode: 'metadata_only',\n      audio_visual_downloaded: false,\n      review_status: 'rights_review_required'\n    }\n  ],\n  claim_map: [\n    {\n      claim_id: 'workspace-claim-1',\n      claim: 'The AICE workflow existed and executed in Kyle n8n workspace.',\n      source_ids: ['workspace-source-1'],\n      support_status: 'supported_by_workspace_execution'\n    }\n  ],\n  attention_intelligence_map: [\n    {\n      dimension: 'accountability',\n      workflow_signal: 'Workspace workflow and execution identifiers are preserved for receipt review.'\n    }\n  ]\n} }];"
+      }
+    },
+    {
+      "id": "rights-and-ambiguity-classification",
+      "name": "Rights and Ambiguity Classification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const input = $input.first().json;\nreturn [{ json: {\n  ...input,\n  rights_review: {\n    status: 'review_required',\n    items: [\n      {\n        source_id: 'workspace-source-1',\n        classification: 'metadata_reference_only',\n        decision: 'do_not_download_or_publish'\n      }\n    ]\n  },\n  ambiguity_register: [\n    {\n      ambiguity_id: 'workspace-ambiguity-1',\n      question: 'Does this workspace proof certify factual truth, rights clearance, platform compliance, or publication safety?',\n      current_status: 'unresolved',\n      resolution_path: 'Human editorial and legal review required before external use.'\n    }\n  ]\n} }];"
+      }
+    },
+    {
+      "id": "human-editorial-review-stub",
+      "name": "Human Editorial Review Stub",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const input = $input.first().json;\nreturn [{ json: {\n  ...input,\n  human_editorial_review: {\n    reviewer: 'Kyle',\n    decision: 'internal_demo_only',\n    reviewed_artifacts: ['topic_brief', 'source_cards', 'claim_map', 'ambiguity_register'],\n    approval_summary: 'Workspace runtime payload is acceptable for internal receipt proof only.',\n    reviewed_at: new Date().toISOString()\n  },\n  narrative_brief: {\n    allowed_use: 'internal_demo_only',\n    brief: ['Show that workspace runtime data appears in the generated Profusion receipt.']\n  },\n  visual_plan: {\n    allowed_use: 'planning_only',\n    generated_media_state: 'not_generated',\n    notes: ['No third-party audio/video is downloaded or republished.']\n  }\n} }];"
+      }
+    },
+    {
+      "id": "return-runtime-payload-for-profusion",
+      "name": "Return Runtime Payload for Profusion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const input = $input.first().json;\nconst workflowId = typeof $workflow !== 'undefined' && $workflow.id ? $workflow.id : 'workspace-workflow-id-unavailable';\nconst executionId = typeof $execution !== 'undefined' && $execution.id ? String($execution.id) : 'workspace-execution-id-unavailable';\nconst nodesExecuted = [\n  'Manual Trigger',\n  'Build Topic Brief',\n  'Build Source Cards',\n  'Extract Claim and Quote Candidates',\n  'Rights and Ambiguity Classification',\n  'Human Editorial Review Stub',\n  'Return Runtime Payload for Profusion'\n];\nreturn [{ json: {\n  ...input,\n  n8n_workspace_workflow_id: workflowId,\n  n8n_execution_id: executionId,\n  n8n_execution_url: null,\n  node_count: nodesExecuted.length,\n  nodes_executed: nodesExecuted,\n  limitations: [\n    'Workspace proof uses controlled runtime metadata.',\n    'No third-party media downloaded.',\n    'Receipt does not certify factual truth, copyright clearance, fair use, platform compliance, journalistic neutrality, or publication safety.'\n  ]\n} }];"
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Topic Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Topic Brief": {
+      "main": [
+        [
+          {
+            "node": "Build Source Cards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Source Cards": {
+      "main": [
+        [
+          {
+            "node": "Extract Claim and Quote Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Claim and Quote Candidates": {
+      "main": [
+        [
+          {
+            "node": "Rights and Ambiguity Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rights and Ambiguity Classification": {
+      "main": [
+        [
+          {
+            "node": "Human Editorial Review Stub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Human Editorial Review Stub": {
+      "main": [
+        [
+          {
+            "node": "Return Runtime Payload for Profusion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "meta": {
+    "redaction_state": "Sanitized repo export. The actual n8n workspace workflow ID and execution ID are recorded in the P0.1.2 closeout note, not required for import."
+  },
+  "tags": []
+}

@@ -1,0 +1,28 @@
+{
+  "policy_id": "metadata_only_source_policy_v1",
+  "media_handling": "metadata_only",
+  "allowed_inputs": [
+    "source title",
+    "source type",
+    "creator or publisher name",
+    "canonical URL",
+    "publication date when known",
+    "short excerpt within quote policy limits",
+    "editorial notes written by the fixture author"
+  ],
+  "disallowed_inputs": [
+    "downloaded audio files",
+    "downloaded video files",
+    "downloaded images",
+    "full transcripts copied from third-party sources",
+    "paywalled or private source text",
+    "raw personal data about private individuals"
+  ],
+  "quote_policy": {
+    "maximum_excerpt_words_per_source": 25,
+    "quotes_require_source_card": true,
+    "quotes_require_review_before_publication": true
+  },
+  "rights_boundary": "This fixture records editorial review state only. It does not grant reuse rights, clear copyright, or authorize public publication.",
+  "redaction_default": "metadata_only"
+}

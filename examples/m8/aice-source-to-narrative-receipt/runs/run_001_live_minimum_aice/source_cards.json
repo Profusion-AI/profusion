@@ -1,0 +1,64 @@
+{
+  "artifact_id": "source_cards",
+  "run_id": "run_001_live_minimum_aice",
+  "media_handling": "metadata_only",
+  "sources": [
+    {
+      "source_id": "src_internal_pipeline_artifact",
+      "title": "Profusion M8 Pipeline Test Artifact: Attention Intelligence vs. Compliance Schooling",
+      "source_type": "internal_archived_markdown",
+      "locator": "docs/archive/2026-05-17-project-split/profusion_m8_pipeline_test_artifact.md",
+      "publication_state": "internal_archive",
+      "accessed_at": "2026-05-18T22:30:20Z",
+      "rights_state": "internal_reference_only",
+      "media_reference": {
+        "kind": "markdown_metadata",
+        "downloaded_media": false,
+        "downloaded_transcript": false
+      },
+      "relevance": "Contains the originating Attention Intelligence editorial frame used as a local source reference."
+    },
+    {
+      "source_id": "src_current_consulting_thesis",
+      "title": "Profusion Consulting Thesis WIP",
+      "source_type": "internal_markdown",
+      "locator": "docs/consulting-thesis-wip.md",
+      "publication_state": "working_draft",
+      "accessed_at": "2026-05-18T22:30:32Z",
+      "rights_state": "internal_reference_only",
+      "media_reference": {
+        "kind": "markdown_metadata",
+        "downloaded_media": false,
+        "downloaded_transcript": false
+      },
+      "relevance": "Provides founder narrative context and boundaries for using Attention Intelligence as a framing concept."
+    },
+    {
+      "source_id": "src_public_ai_work_review_burden",
+      "title": "Public-source placeholder: AI-assisted work increases review burden",
+      "source_type": "public_web_metadata_placeholder",
+      "locator": "metadata-only URL placeholder; live URL not required for this fixture",
+      "publication_state": "metadata_placeholder",
+      "accessed_at": "2026-05-18T22:31:00Z",
+      "rights_state": "not_cleared_for_quotation",
+      "media_reference": {
+        "kind": "web_metadata",
+        "downloaded_media": false,
+        "downloaded_transcript": false
+      },
+      "relevance": "Represents the kind of public context a live run would need to verify before making broad market or research claims."
+    }
+  ],
+  "unsupported_source_needs": [
+    {
+      "needed_for_claim": "Schools broadly lack Attention Intelligence curriculum.",
+      "status": "not_sourced_in_fixture",
+      "reason": "No authoritative education-policy or curriculum source is included."
+    },
+    {
+      "needed_for_claim": "Attention Intelligence is a validated cognitive skill.",
+      "status": "not_sourced_in_fixture",
+      "reason": "No peer-reviewed validation source is included."
+    }
+  ]
+}

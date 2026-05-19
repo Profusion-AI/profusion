@@ -1,0 +1,22 @@
+{
+  "topic_id": "aice_attention_intelligence_minimum",
+  "title": "Attention Intelligence as an AI-era editorial skill",
+  "requested_output": "Short internal narrative brief",
+  "audience": "Founder, operator, or editorial reviewer evaluating a source-aware AI workflow",
+  "editorial_question": "Can the concept of Attention Intelligence be framed from a small, reviewable source set without overstating research consensus or publication rights?",
+  "scope": [
+    "Define Attention Intelligence as a working editorial frame.",
+    "Connect the frame to AI-assisted work and review burden.",
+    "Identify what is supported, ambiguous, and intentionally not claimed."
+  ],
+  "out_of_scope": [
+    "Scientific validation of a new cognitive construct.",
+    "Claims about school adoption, customer demand, or clinical outcomes.",
+    "Publication-ready longform essay generation."
+  ],
+  "success_criteria": [
+    "Every substantive claim is mapped to at least one source card or marked unsupported.",
+    "Rights status is reviewed before the narrative brief is marked ready.",
+    "Human editorial review records limitations and allowed use."
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "artifact_id": "narrative_brief",
+  "run_id": "run_001_live_minimum_aice",
+  "title": "Attention Intelligence and the Review Burden of AI-Assisted Work",
+  "status": "ready_for_internal_demo_review",
+  "allowed_use": "internal_fixture_demo_only",
+  "brief": [
+    "Attention Intelligence is used here as a working frame for a practical editorial problem: AI can speed up output while making source awareness, review discipline, rights boundaries, and human judgment harder to keep visible.",
+    "The fixture supports a narrow claim: an AI-assisted narrative workflow can record where sources entered, which claims were supported, which claims were rejected, and which human review gates occurred before a brief was marked ready.",
+    "The fixture does not support stronger claims about curriculum adoption, scientific validation, public publication rights, customer traction, or production-grade automation."
+  ],
+  "claim_ids_used": [
+    "claim_001",
+    "claim_002"
+  ],
+  "claim_ids_rejected": [
+    "claim_003",
+    "claim_004"
+  ],
+  "source_ids_used": [
+    "src_internal_pipeline_artifact",
+    "src_current_consulting_thesis",
+    "src_public_ai_work_review_burden"
+  ],
+  "review_gates": [
+    "rights_review.json",
+    "ambiguity_register.json",
+    "human_editorial_review.json"
+  ],
+  "limitations": [
+    "Internal demo only.",
+    "Metadata-only source references.",
+    "No downloaded media.",
+    "No credentialed YouTube/API or cloud n8n execution proof.",
+    "No publication rights clearance."
+  ]
+}

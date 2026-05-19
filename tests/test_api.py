@@ -1,6 +1,8 @@
 """FastAPI operator dashboard route tests."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -166,6 +168,113 @@ def test_get_item_receipts_returns_current_lifecycle_status(client):
     assert body["receipts"][0]["status_history"][-1]["to_status"] == "reviewed"
     assert body["receipts"][0]["receipt_type"] == "content_video_receipt"
     assert body["receipts"][0]["evidence_json"].endswith("evidence.json")
+
+
+# ---------------------------------------------------------------------------
+# M8-GTM runtime receipt API
+# ---------------------------------------------------------------------------
+
+def _aice_runtime_payload() -> dict:
+    return {
+        "workflow_slug": "aice-source-to-narrative-receipt",
+        "n8n_workspace_workflow_id": "wf_api_runtime_aice",
+        "n8n_execution_id": "exec_api_runtime_aice",
+        "executed_at": "2026-05-19T16:30:00Z",
+        "node_count": 7,
+        "nodes_executed": [
+            "Manual Trigger",
+            "Build Topic Brief",
+            "Build Source Cards",
+            "Extract Claim and Quote Candidates",
+            "Rights and Ambiguity Classification",
+            "Human Editorial Review Stub",
+            "Generate Profusion Receipt via HTTP Request",
+        ],
+        "topic_brief": {
+            "title": "API runtime AICE topic",
+            "editorial_question": "Can n8n call the local Profusion API?",
+        },
+        "source_cards": [
+            {
+                "source_id": "api-source-1",
+                "title": "API source card",
+                "source_type": "public_web_metadata",
+            }
+        ],
+        "quote_candidates": [
+            {
+                "quote_id": "api-quote-1",
+                "source_id": "api-source-1",
+                "source_label": "API source card",
+                "segment_summary": "Metadata-only candidate.",
+                "storage_mode": "metadata_only",
+                "audio_visual_downloaded": False,
+                "review_status": "rights_review_required",
+            }
+        ],
+        "claim_map": [
+            {
+                "claim_id": "api-claim-1",
+                "claim": "The runtime API accepted n8n payload data.",
+                "source_ids": ["api-source-1"],
+                "support_status": "supported_by_runtime_payload",
+            }
+        ],
+        "attention_intelligence_map": [
+            {
+                "dimension": "accountability",
+                "workflow_signal": "API request preserved runtime IDs.",
+            }
+        ],
+        "rights_review": {
+            "status": "review_required",
+            "items": [
+                {
+                    "source_id": "api-source-1",
+                    "classification": "metadata_reference_only",
+                    "decision": "do_not_download_or_publish",
+                }
+            ],
+        },
+        "ambiguity_register": [
+            {
+                "ambiguity_id": "api-ambiguity-1",
+                "question": "Does API receipt generation imply publication safety?",
+                "current_status": "unresolved",
+            }
+        ],
+        "human_editorial_review": {
+            "reviewer": "Kyle",
+            "decision": "internal_demo_only",
+            "reviewed_artifacts": ["topic_brief", "source_cards", "claim_map"],
+            "approval_summary": "API runtime payload is internal proof only.",
+        },
+        "narrative_brief": {
+            "allowed_use": "internal_demo_only",
+            "brief": ["Runtime API data should appear in the generated receipt."],
+        },
+        "visual_plan": {
+            "allowed_use": "planning_only",
+            "generated_media_state": "not_generated",
+        },
+        "limitations": ["No third-party media downloaded."],
+    }
+
+
+def test_post_aice_runtime_receipt_generates_packet(client):
+    tc, *_ = client
+
+    resp = tc.post("/api/m8/aice/receipt", json=_aice_runtime_payload())
+
+    assert resp.status_code == 200
+    payload = resp.json()
+    assert payload["workflow_slug"] == "aice-source-to-narrative-receipt"
+    assert payload["n8n_workspace_workflow_id"] == "wf_api_runtime_aice"
+    assert payload["n8n_execution_id"] == "exec_api_runtime_aice"
+    assert payload["node_count"] == 7
+    assert Path(payload["workflow_receipt_html"]).exists()
+    assert payload["claims_supported"]
+    assert payload["claims_not_supported"]
 
 
 # ---------------------------------------------------------------------------
