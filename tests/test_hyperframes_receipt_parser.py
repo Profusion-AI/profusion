@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import pytest
@@ -468,6 +469,76 @@ def test_aice_hyperframes_app_serves_validator_model_receipt_and_artifact(
     assert client.get("/artifacts/../../workflow_receipt.json").status_code == 404
     assert client.get("/packet/../../pyproject.toml").status_code == 404
     assert client.get("/packet/%2e%2e/pyproject.toml").status_code == 404
+
+
+def test_aice_hyperframes_app_rejects_symlinked_receipt_escape(tmp_path: Path):
+    from orchestrator.hyperframes_server import create_aice_hyperframes_app
+
+    packet_dir = make_runtime_packet(tmp_path)
+    outside_file = tmp_path / "outside-receipt.html"
+    outside_file.write_text("outside-secret", encoding="utf-8")
+    receipt_path = packet_dir / "workflow_receipt.html"
+    receipt_path.unlink()
+    receipt_path.symlink_to(outside_file)
+
+    client = TestClient(
+        create_aice_hyperframes_app(
+            packet_dir,
+            local_url="http://127.0.0.1:8765/",
+        )
+    )
+
+    response = client.get("/receipt")
+
+    assert response.status_code == 404
+    assert "outside-secret" not in response.text
+
+
+def test_aice_hyperframes_app_rejects_symlinked_artifacts_directory_escape(
+    tmp_path: Path,
+):
+    from orchestrator.hyperframes_server import create_aice_hyperframes_app
+
+    packet_dir = make_runtime_packet(tmp_path)
+    client = TestClient(
+        create_aice_hyperframes_app(
+            packet_dir,
+            local_url="http://127.0.0.1:8765/",
+        )
+    )
+    outside_dir = tmp_path / "outside-artifacts"
+    outside_dir.mkdir()
+    (outside_dir / "secret.txt").write_text("outside-secret", encoding="utf-8")
+    artifacts_dir = packet_dir / "artifacts"
+    shutil.rmtree(artifacts_dir)
+    artifacts_dir.symlink_to(outside_dir, target_is_directory=True)
+
+    response = client.get("/artifacts/secret.txt")
+
+    assert response.status_code == 404
+    assert "outside-secret" not in response.text
+
+
+def test_aice_hyperframes_app_rejects_symlinked_packet_file_escape(tmp_path: Path):
+    from orchestrator.hyperframes_server import create_aice_hyperframes_app
+
+    packet_dir = make_runtime_packet(tmp_path)
+    client = TestClient(
+        create_aice_hyperframes_app(
+            packet_dir,
+            local_url="http://127.0.0.1:8765/",
+        )
+    )
+    outside_file = tmp_path / "outside-runtime-payload.json"
+    outside_file.write_text('{"secret": "outside-secret"}', encoding="utf-8")
+    runtime_payload_path = packet_dir / "artifacts" / "runtime_payload.json"
+    runtime_payload_path.unlink()
+    runtime_payload_path.symlink_to(outside_file)
+
+    response = client.get("/packet/artifacts/runtime_payload.json")
+
+    assert response.status_code == 404
+    assert "outside-secret" not in response.text
 
 
 def test_hyperframes_validate_cli_dry_run_prints_validator_language(

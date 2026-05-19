@@ -34,9 +34,7 @@ def create_aice_hyperframes_app(
 
     @app.get("/receipt")
     def receipt_html() -> FileResponse:
-        receipt_path = root / "workflow_receipt.html"
-        if not receipt_path.is_file():
-            raise HTTPException(status_code=404)
+        receipt_path = _safe_route_path(root, "workflow_receipt.html")
         return FileResponse(receipt_path, media_type="text/html")
 
     @app.get("/packet/{packet_path:path}")
@@ -45,7 +43,7 @@ def create_aice_hyperframes_app(
 
     @app.get("/artifacts/{artifact_path:path}")
     def artifact_file(artifact_path: str) -> FileResponse:
-        return _file_response(_safe_route_path(root / "artifacts", artifact_path))
+        return _file_response(_safe_route_path(root, f"artifacts/{artifact_path}"))
 
     return app
 
