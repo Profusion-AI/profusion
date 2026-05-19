@@ -21,6 +21,7 @@ PRODUCT_SAFE_EXPLANATION = (
     "supported, what claims are not supported, and what limitations remain."
 )
 LINEAGE_NOTE = "AICE workflow map derived from recorded node trail and receipt artifacts."
+AICE_MINIMUM_NODE_COUNT = 7
 CORE_JSON_FILES = (
     "workflow_receipt.json",
     "artifact_manifest.json",
@@ -265,21 +266,19 @@ def _build_validation(
     manifest_paths_safe = _manifest_paths_are_safe(root, manifest)
     hash_status, hash_message = _check_manifest_hashes(root, manifest)
     forbidden_found = _forbidden_overclaim_language_found(receipt, observation)
+    workflow_slug_matches = _workflow_slugs_match(manifest, runtime_payload, observation)
 
     checks: dict[str, Any] = {
         "core_files_present": all((root / rel).is_file() for rel in CORE_JSON_FILES),
         "display_files_present": all((root / rel).is_file() for rel in DISPLAY_FILES),
         "runtime_payload_found": (root / "artifacts" / "runtime_payload.json").is_file(),
-        "workflow_slug_matches": (
-            _string_value(manifest.get("workflow_slug"))
-            == _string_value(runtime_payload.get("workflow_slug"))
-        ),
+        "workflow_slug_matches": workflow_slug_matches,
         "n8n_execution_id_present": bool(
             _string_value(n8n_execution.get("execution_id"))
             or _string_value(runtime_payload.get("n8n_execution_id"))
         ),
         "node_count_matches_trail": bool(node_count and node_count == len(recorded_nodes)),
-        "minimum_node_count_met": len(recorded_nodes) >= 3,
+        "minimum_node_count_met": len(recorded_nodes) >= AICE_MINIMUM_NODE_COUNT,
         "human_review_artifact_present": any(
             artifact["artifact_type"] == "human_editorial_review" and artifact["exists"]
             for artifact in artifacts
@@ -319,8 +318,8 @@ def _build_validation(
         findings,
         "workflow_slug_matches",
         checks["workflow_slug_matches"],
-        "Workflow slug matches the runtime payload.",
-        "Workflow slug does not match the runtime payload.",
+        "Workflow slug matches manifest, runtime payload, and observation.",
+        "Workflow slug does not match manifest, runtime payload, and observation.",
     )
     _add_bool_finding(
         findings,
@@ -340,8 +339,8 @@ def _build_validation(
         findings,
         "minimum_node_count_met",
         checks["minimum_node_count_met"],
-        "Minimum workflow node count is met.",
-        "Minimum workflow node count is not met.",
+        f"Minimum AICE workflow node count of {AICE_MINIMUM_NODE_COUNT} is met.",
+        f"Minimum AICE workflow node count of {AICE_MINIMUM_NODE_COUNT} is not met.",
     )
     _add_bool_finding(
         findings,
@@ -470,20 +469,58 @@ def _manifest_paths_are_safe(root: Path, manifest: dict[str, Any]) -> bool:
     return True
 
 
+def _workflow_slugs_match(
+    manifest: dict[str, Any],
+    runtime_payload: dict[str, Any],
+    observation: dict[str, Any],
+) -> bool:
+    slugs = (
+        _string_value(manifest.get("workflow_slug")),
+        _string_value(runtime_payload.get("workflow_slug")),
+        _string_value(observation.get("workflow_id")),
+    )
+    return all(slugs) and len(set(slugs)) == 1
+
+
 def _forbidden_overclaim_language_found(
     receipt: dict[str, Any],
     observation: dict[str, Any],
 ) -> bool:
     fields_to_scan = [
         receipt.get("workflow_purpose"),
+        receipt.get("evidence_boundary"),
+        receipt.get("topic_episode_thesis"),
         receipt.get("what_happened"),
         receipt.get("where_ai_acted"),
         receipt.get("where_n8n_acted"),
         receipt.get("where_human_review_entered"),
         receipt.get("final_action"),
         receipt.get("narrative_decisions"),
+        receipt.get("source_cards"),
+        receipt.get("claims_and_quote_candidates"),
+        receipt.get("quote_candidates"),
+        receipt.get("rights_use_ambiguity_classification"),
+        receipt.get("ambiguities_preserved"),
+        receipt.get("attention_intelligence_mapping"),
+        receipt.get("generated_synthetic_media_plan"),
+        receipt.get("artifacts_reviewed"),
+        receipt.get("next_recommended_review"),
         receipt.get("claims_supported"),
         observation.get("supported_claims"),
+        observation.get("topic_brief"),
+        observation.get("source_cards"),
+        observation.get("claim_map"),
+        observation.get("quote_candidates"),
+        observation.get("rights_review"),
+        observation.get("ambiguity_register"),
+        observation.get("attention_intelligence_map"),
+        observation.get("narrative_brief"),
+        observation.get("visual_plan"),
+        observation.get("artifacts_captured"),
+        observation.get("ai_actions_observed"),
+        observation.get("outcome"),
+        observation.get("trigger_summary"),
+        observation.get("workflow_boundary"),
     ]
     text = "\n".join(_flatten_text(value) for value in fields_to_scan).lower()
     return any(term in text for term in FORBIDDEN_FOUNDER_TERMS)

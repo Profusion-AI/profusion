@@ -137,6 +137,73 @@ def test_load_aice_validator_model_detects_forbidden_supported_claim(tmp_path: P
     )
 
 
+def test_load_aice_validator_model_fails_when_node_trail_is_truncated(tmp_path: Path):
+    from orchestrator.hyperframes_receipts import load_aice_hyperframe_model
+
+    packet_dir = make_runtime_packet(tmp_path)
+    observation_path = packet_dir / "m8_observation.json"
+    observation = json.loads(observation_path.read_text(encoding="utf-8"))
+    observation["n8n_execution"]["nodes_executed"] = observation["n8n_execution"][
+        "nodes_executed"
+    ][:3]
+    observation["n8n_execution"]["node_count"] = 3
+    observation_path.write_text(json.dumps(observation, indent=2), encoding="utf-8")
+
+    model = load_aice_hyperframe_model(packet_dir)
+
+    assert model["validation"]["validation_status"] == "validation_failed"
+    assert model["validation"]["minimum_node_count_met"] is False
+    assert any(
+        finding["severity"] == "fail" and finding["code"] == "minimum_node_count_met"
+        for finding in model["validation"]["validation_findings"]
+    )
+
+
+def test_load_aice_validator_model_fails_on_observation_workflow_slug_mismatch(
+    tmp_path: Path,
+):
+    from orchestrator.hyperframes_receipts import load_aice_hyperframe_model
+
+    packet_dir = make_runtime_packet(tmp_path)
+    observation_path = packet_dir / "m8_observation.json"
+    observation = json.loads(observation_path.read_text(encoding="utf-8"))
+    observation["workflow_id"] = "other-workflow"
+    observation_path.write_text(json.dumps(observation, indent=2), encoding="utf-8")
+
+    model = load_aice_hyperframe_model(packet_dir)
+
+    assert model["validation"]["validation_status"] == "validation_failed"
+    assert model["validation"]["workflow_slug_matches"] is False
+    assert any(
+        finding["severity"] == "fail" and finding["code"] == "workflow_slug_matches"
+        for finding in model["validation"]["validation_findings"]
+    )
+
+
+def test_load_aice_validator_model_detects_forbidden_positive_receipt_field(
+    tmp_path: Path,
+):
+    from orchestrator.hyperframes_receipts import load_aice_hyperframe_model
+
+    packet_dir = make_runtime_packet(tmp_path)
+    receipt_path = packet_dir / "workflow_receipt.json"
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    receipt["evidence_boundary"] = (
+        f"{receipt['evidence_boundary']} This workflow is production ready."
+    )
+    receipt_path.write_text(json.dumps(receipt, indent=2), encoding="utf-8")
+
+    model = load_aice_hyperframe_model(packet_dir)
+
+    assert model["validation"]["validation_status"] == "validation_failed"
+    assert model["validation"]["forbidden_overclaim_language_found"] is True
+    assert any(
+        finding["severity"] == "fail"
+        and finding["code"] == "forbidden_overclaim_language"
+        for finding in model["validation"]["validation_findings"]
+    )
+
+
 def test_load_aice_validator_model_fails_on_manifest_hash_mismatch(tmp_path: Path):
     from orchestrator.hyperframes_receipts import load_aice_hyperframe_model
 
