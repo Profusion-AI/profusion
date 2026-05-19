@@ -1,0 +1,41 @@
+{
+  "artifact_id": "visual_plan",
+  "run_id": "run_001_live_minimum_aice",
+  "status": "generated_broll_plan_only",
+  "publication_state": "not_publishable_without_human_review",
+  "media_downloads": false,
+  "segments": [
+    {
+      "segment_id": "vis_001",
+      "purpose": "chapter_transition",
+      "description": "Abstract transition from answer abundance to attention scarcity.",
+      "source_dependency": "none",
+      "generation_mode": "synthetic_visual_metaphor_allowed",
+      "rights_status": "generated_or_original_only",
+      "review_status": "approved_for_generated_broll_only"
+    },
+    {
+      "segment_id": "vis_002",
+      "purpose": "data_visualization_support",
+      "description": "Simple source-card and claim-map diagram showing how claims move into the narrative brief.",
+      "source_dependency": "claim_map.json",
+      "generation_mode": "diagram_from_receipt_artifacts",
+      "rights_status": "owned_receipt_artifact",
+      "review_status": "approved_for_internal_demo"
+    },
+    {
+      "segment_id": "vis_003",
+      "purpose": "clip_candidate_reference",
+      "description": "Any third-party video reference remains a citation or replacement prompt, not packaged footage.",
+      "source_dependency": "quote_candidates.json",
+      "generation_mode": "metadata_reference_only",
+      "rights_status": "rights_review_required",
+      "review_status": "hold_for_permission_or_replacement"
+    }
+  ],
+  "limitations": [
+    "This plan does not include downloaded third-party audio or video.",
+    "Generated visuals are expression layers, not evidence.",
+    "Third-party clip candidates require separate rights, context, and editorial review before use."
+  ]
+}

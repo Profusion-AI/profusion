@@ -1,0 +1,60 @@
+{
+  "artifact_id": "execution_log",
+  "run_id": "run_001_live_minimum_aice",
+  "events": [
+    {
+      "at": "2026-05-18T22:30:00Z",
+      "actor": "fixture",
+      "action": "load_topic_brief",
+      "artifact": "../../topic_brief.json"
+    },
+    {
+      "at": "2026-05-18T22:30:20Z",
+      "actor": "fixture",
+      "action": "register_metadata_only_sources",
+      "artifact": "source_cards.json"
+    },
+    {
+      "at": "2026-05-18T22:31:10Z",
+      "actor": "ai",
+      "action": "extract_quote_candidates",
+      "artifact": "quote_candidates.json"
+    },
+    {
+      "at": "2026-05-18T22:32:00Z",
+      "actor": "ai",
+      "action": "map_claims_to_sources",
+      "artifact": "claim_map.json"
+    },
+    {
+      "at": "2026-05-18T22:33:00Z",
+      "actor": "ai",
+      "action": "map_attention_intelligence_dimensions",
+      "artifact": "attention_intelligence_map.json"
+    },
+    {
+      "at": "2026-05-18T22:34:10Z",
+      "actor": "fixture_editor",
+      "action": "review_rights_boundary",
+      "artifact": "rights_review.json"
+    },
+    {
+      "at": "2026-05-18T22:34:45Z",
+      "actor": "fixture_editor",
+      "action": "record_ambiguities",
+      "artifact": "ambiguity_register.json"
+    },
+    {
+      "at": "2026-05-18T22:35:20Z",
+      "actor": "fixture_editor",
+      "action": "complete_human_editorial_review",
+      "artifact": "human_editorial_review.json"
+    },
+    {
+      "at": "2026-05-18T22:36:40Z",
+      "actor": "fixture",
+      "action": "mark_narrative_brief_internal_demo_ready",
+      "artifact": "narrative_brief.json"
+    }
+  ]
+}

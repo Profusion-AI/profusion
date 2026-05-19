@@ -1,0 +1,39 @@
+{
+  "artifact_id": "quote_candidates",
+  "run_id": "run_001_live_minimum_aice",
+  "quote_policy": "Short excerpts only; review required before public use.",
+  "quote_candidates": [
+    {
+      "quote_id": "quote_internal_001",
+      "source_id": "src_internal_pipeline_artifact",
+      "source_label": "Profusion M8 Pipeline Test Artifact",
+      "excerpt": "That is what I mean by Attention Intelligence.",
+      "word_count": 8,
+      "proposed_use": "Definition anchor",
+      "storage_mode": "metadata_only",
+      "audio_visual_downloaded": false,
+      "rights_state": "internal_reference_only",
+      "review_status": "rights_review_required",
+      "public_use_allowed": false
+    },
+    {
+      "quote_id": "quote_internal_002",
+      "source_id": "src_current_consulting_thesis",
+      "source_label": "Profusion Consulting Thesis WIP",
+      "excerpt": "Attention Intelligence is the philosophical and pedagogical frame.",
+      "word_count": 8,
+      "proposed_use": "Frame summary",
+      "storage_mode": "metadata_only",
+      "audio_visual_downloaded": false,
+      "rights_state": "internal_reference_only",
+      "review_status": "hold_for_permission_or_replacement",
+      "public_use_allowed": false
+    }
+  ],
+  "rejected_candidates": [
+    {
+      "source_id": "src_public_ai_work_review_burden",
+      "reason": "Metadata placeholder is not cleared for quotation and has no verified excerpt in this fixture."
+    }
+  ]
+}

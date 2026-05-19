@@ -1,0 +1,33 @@
+{
+  "workflow_slug": "aice-source-to-narrative-receipt",
+  "workflow_name": "AICE Source-to-Narrative Workflow Receipt",
+  "trust_domain": "ai_assisted_investigative_content",
+  "source_system": "n8n",
+  "evidence_mode": "fixture_backed_live_n8n_demo",
+  "default_publication_state": "not_publishable_without_human_review",
+  "workflow_boundary": "Profusion documents a live-minimum AICE source-to-narrative workflow: topic brief, metadata-only source cards, quote candidates, claim mapping, Attention Intelligence framing, rights review, ambiguity register, human editorial review, n8n run summary, and final narrative brief. It does not certify factual truth, copyright clearance, fair use, journalistic neutrality, PBS/Frontline affiliation, platform compliance, legal compliance, publication safety, or permission to reuse third-party video/audio.",
+  "trigger_summary": "One AICE topic brief was passed through a live-minimum n8n workflow path and captured as local artifacts to test whether a narrative brief can expose evidence, review, rights, and unsupported-claim boundaries.",
+  "workflow_purpose": "Show how an AI-assisted editorial workflow can preserve source provenance and human review boundaries before a narrative brief is marked ready for internal review.",
+  "primary_run_id": "run_001_live_minimum_aice",
+  "required_artifacts": [
+    "run.json",
+    "source_cards.json",
+    "quote_candidates.json",
+    "claim_map.json",
+    "attention_intelligence_map.json",
+    "rights_review.json",
+    "ambiguity_register.json",
+    "human_editorial_review.json",
+    "narrative_brief.json",
+    "visual_plan.json",
+    "execution_log.json",
+    "n8n_run_summary.json"
+  ],
+  "limitations": [
+    "The fixture records the minimum n8n-to-Profusion receipt path; credentialed external search can be replaced by controlled fallback payloads when unavailable.",
+    "All media references are metadata-only; no downloaded audio, video, image, or transcript assets are included.",
+    "The receipt does not grant publication rights or certify copyright compliance.",
+    "The receipt does not prove every source claim is true; it only records the source and review state represented in the fixture.",
+    "The receipt does not approve public publication or external distribution."
+  ]
+}

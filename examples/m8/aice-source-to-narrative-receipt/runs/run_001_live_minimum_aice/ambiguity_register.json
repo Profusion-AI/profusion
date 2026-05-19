@@ -1,0 +1,42 @@
+{
+  "artifact_id": "ambiguity_register",
+  "run_id": "run_001_live_minimum_aice",
+  "ambiguities": [
+    {
+      "ambiguity_id": "amb_001",
+      "ambiguity_type": "factual_support",
+      "topic": "Concept status",
+      "description": "Attention Intelligence is used as a working editorial and pedagogical frame, not a validated scientific term.",
+      "current_status": "review_required",
+      "publication_impact": "must avoid scientific validation language",
+      "resolution": "State it as a frame; avoid scientific validation language."
+    },
+    {
+      "ambiguity_id": "amb_002",
+      "ambiguity_type": "factual_support",
+      "topic": "Education system claim",
+      "description": "The fixture does not include source evidence about school curriculum coverage.",
+      "current_status": "unresolved",
+      "publication_impact": "claim cannot enter public narrative",
+      "resolution": "Remove broad school-failure claims from the narrative brief."
+    },
+    {
+      "ambiguity_id": "amb_003",
+      "ambiguity_type": "copyright",
+      "topic": "Public publication rights",
+      "description": "Internal source notes and placeholder metadata are not enough to publish quotations externally.",
+      "current_status": "review_required",
+      "publication_impact": "cannot publish quote or clip candidates externally",
+      "resolution": "Mark output internal-demo-ready only."
+    },
+    {
+      "ambiguity_id": "amb_004",
+      "ambiguity_type": "live_execution",
+      "topic": "Live execution",
+      "description": "The run records a live-minimum n8n-to-Profusion path while allowing controlled fallback source metadata when external credentials are absent.",
+      "current_status": "review_required",
+      "publication_impact": "must disclose fallback metadata limitations",
+      "resolution": "Keep evidence mode visible in run and receipt artifacts."
+    }
+  ]
+}

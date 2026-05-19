@@ -1,0 +1,65 @@
+{
+  "artifact_id": "claim_map",
+  "run_id": "run_001_live_minimum_aice",
+  "claims": [
+    {
+      "claim_id": "claim_001",
+      "claim": "Attention Intelligence can be used as a working editorial frame for discussing AI-era attention and review habits.",
+      "support_state": "supported_for_internal_framing",
+      "supporting_source_ids": [
+        "src_internal_pipeline_artifact",
+        "src_current_consulting_thesis"
+      ],
+      "supporting_quote_ids": [
+        "quote_internal_001",
+        "quote_internal_002"
+      ],
+      "limitations": [
+        "This is a founder/editorial framing claim, not a validated scientific construct claim."
+      ]
+    },
+    {
+      "claim_id": "claim_002",
+      "claim": "AI-assisted workflows can make review, evidence, and accountability more important.",
+      "support_state": "directionally_supported_needs_live_sources_before_publication",
+      "supporting_source_ids": [
+        "src_public_ai_work_review_burden"
+      ],
+      "supporting_quote_ids": [],
+      "limitations": [
+        "The fixture includes only metadata placeholder support for this broader market claim."
+      ]
+    },
+    {
+      "claim_id": "claim_003",
+      "claim": "Schools are currently failing to teach Attention Intelligence at scale.",
+      "support_state": "unsupported_do_not_use",
+      "supporting_source_ids": [],
+      "supporting_quote_ids": [],
+      "limitations": [
+        "No curriculum data, education-policy source, or adoption benchmark is included."
+      ]
+    },
+    {
+      "claim_id": "claim_004",
+      "claim": "Profusion has proven a production-grade AICE publishing pipeline.",
+      "support_state": "unsupported_do_not_use",
+      "supporting_source_ids": [],
+      "supporting_quote_ids": [],
+      "limitations": [
+        "This fixture is a local demo data contract, not production evidence."
+      ]
+    }
+  ],
+  "supported_claims": [
+    "The run summary records a local live-minimum n8n execution path for the AICE workflow.",
+    "The fixture records a metadata-only source review process for an internal narrative brief.",
+    "The fixture distinguishes supported framing claims from unsupported public or scientific claims.",
+    "The narrative brief was marked internal-demo-ready only after rights, ambiguity, and human editorial review artifacts were captured."
+  ],
+  "unsupported_claims": [
+    "The fixture does not prove credentialed YouTube/API metadata discovery, cloud n8n execution, or external publishing.",
+    "The fixture does not prove publication rights for third-party material.",
+    "The fixture does not prove a validated Attention Intelligence curriculum, market demand, customer traction, or production pipeline."
+  ]
+}

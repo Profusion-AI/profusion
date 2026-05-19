@@ -1,0 +1,30 @@
+{
+  "artifact_id": "rights_review",
+  "run_id": "run_001_live_minimum_aice",
+  "reviewed_at": "2026-05-18T22:34:10Z",
+  "reviewer_role": "fixture_editor",
+  "overall_state": "internal_demo_use_only",
+  "media_handling_confirmed": "metadata_only",
+  "downloaded_media_present": false,
+  "source_reviews": [
+    {
+      "source_id": "src_internal_pipeline_artifact",
+      "rights_state": "internal_reference_only",
+      "allowed_use": "internal demo and fixture validation",
+      "public_use_requires": "separate editorial and rights review"
+    },
+    {
+      "source_id": "src_current_consulting_thesis",
+      "rights_state": "internal_reference_only",
+      "allowed_use": "internal demo and fixture validation",
+      "public_use_requires": "separate editorial and rights review"
+    },
+    {
+      "source_id": "src_public_ai_work_review_burden",
+      "rights_state": "not_cleared_for_quotation",
+      "allowed_use": "metadata placeholder only",
+      "public_use_requires": "live source verification and rights-safe citation"
+    }
+  ],
+  "decision": "Do not publish externally from this fixture. Internal demo review is allowed."
+}

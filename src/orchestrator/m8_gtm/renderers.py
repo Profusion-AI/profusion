@@ -19,15 +19,73 @@ def render_receipt_markdown(receipt: dict[str, Any]) -> str:
         "## Workflow Boundary",
         str(receipt["evidence_boundary"]),
         "",
+    ]
+    if receipt.get("topic_episode_thesis"):
+        lines.extend(
+            [
+                "## Topic / Episode Thesis",
+                str(receipt["topic_episode_thesis"]),
+                "",
+            ]
+        )
+    lines.extend(
+        [
         "## What Happened",
         *_markdown_list(receipt["what_happened"]),
         "",
         "## Where AI Acted",
         *_markdown_list(receipt["where_ai_acted"]),
         "",
-        "## Where Human Review Entered",
+        ]
+    )
+    if receipt.get("where_n8n_acted"):
+        lines.extend(
+            [
+                "## Where n8n Acted",
+                *_markdown_list(receipt["where_n8n_acted"]),
+                "",
+            ]
+        )
+    human_review_title = (
+        "Where Human Editorial Review Entered"
+        if receipt.get("trust_domain") == "ai_assisted_investigative_content"
+        else "Where Human Review Entered"
+    )
+    lines.extend(
+        [
+        f"## {human_review_title}",
         *_markdown_list(receipt["where_human_review_entered"]),
         "",
+        ]
+    )
+    _extend_optional_markdown_section(lines, "Source Cards Captured", receipt.get("source_cards"))
+    _extend_optional_markdown_section(
+        lines,
+        "Claims and Quote Candidates",
+        receipt.get("claims_and_quote_candidates") or receipt.get("quote_candidates"),
+    )
+    _extend_optional_markdown_section(
+        lines,
+        "Rights / Use / Ambiguity Classification",
+        receipt.get("rights_use_ambiguity_classification"),
+    )
+    _extend_optional_markdown_section(
+        lines,
+        "Attention Intelligence Mapping",
+        receipt.get("attention_intelligence_mapping"),
+    )
+    _extend_optional_markdown_section(
+        lines,
+        "Narrative Decisions",
+        receipt.get("narrative_decisions"),
+    )
+    _extend_optional_markdown_section(
+        lines,
+        "Generated / Synthetic Media Plan",
+        receipt.get("generated_synthetic_media_plan"),
+    )
+    lines.extend(
+        [
         "## Artifacts Captured",
         *_artifact_list(receipt["artifacts_reviewed"]),
         "",
@@ -46,7 +104,8 @@ def render_receipt_markdown(receipt: dict[str, Any]) -> str:
         "## Next Recommended Review",
         str(receipt["next_recommended_review"]),
         "",
-    ]
+        ]
+    )
     return "\n".join(lines)
 
 
@@ -73,9 +132,34 @@ def render_receipt_html(receipt: dict[str, Any]) -> str:
             f"  <p><strong>Evidence mode:</strong> <code>{escape(str(receipt['evidence_mode']))}</code></p>",
             f"  <p><strong>Generated at:</strong> <code>{escape(str(receipt['generated_at']))}</code></p>",
             _section("Workflow Boundary", f"<p>{escape(str(receipt['evidence_boundary']))}</p>"),
+            _optional_section("Topic / Episode Thesis", receipt.get("topic_episode_thesis")),
             _section("What Happened", _html_list(receipt["what_happened"])),
             _section("Where AI Acted", _html_list(receipt["where_ai_acted"])),
-            _section("Where Human Review Entered", _html_list(receipt["where_human_review_entered"])),
+            _optional_section("Where n8n Acted", receipt.get("where_n8n_acted")),
+            _section(
+                "Where Human Editorial Review Entered"
+                if receipt.get("trust_domain") == "ai_assisted_investigative_content"
+                else "Where Human Review Entered",
+                _html_list(receipt["where_human_review_entered"]),
+            ),
+            _optional_section("Source Cards Captured", receipt.get("source_cards")),
+            _optional_section(
+                "Claims and Quote Candidates",
+                receipt.get("claims_and_quote_candidates") or receipt.get("quote_candidates"),
+            ),
+            _optional_section(
+                "Rights / Use / Ambiguity Classification",
+                receipt.get("rights_use_ambiguity_classification"),
+            ),
+            _optional_section(
+                "Attention Intelligence Mapping",
+                receipt.get("attention_intelligence_mapping"),
+            ),
+            _optional_section("Narrative Decisions", receipt.get("narrative_decisions")),
+            _optional_section(
+                "Generated / Synthetic Media Plan",
+                receipt.get("generated_synthetic_media_plan"),
+            ),
             _section("Artifacts Captured", _html_artifacts(receipt["artifacts_reviewed"])),
             _section("Final Outcome", _html_key_values(receipt["final_action"])),
             _section("Supported Claims", _html_list(receipt["claims_supported"])),
@@ -93,6 +177,21 @@ def _markdown_list(values: list[Any]) -> list[str]:
     return [f"- {value}" for value in values]
 
 
+def _extend_optional_markdown_section(
+    lines: list[str],
+    title: str,
+    value: Any,
+) -> None:
+    if value is None:
+        return
+    lines.extend([f"## {title}"])
+    if isinstance(value, list):
+        lines.extend(_markdown_list(value))
+    else:
+        lines.extend(_markdown_list([value]))
+    lines.append("")
+
+
 def _artifact_list(values: list[dict[str, Any]]) -> list[str]:
     return [
         f"- `{row['artifact_id']}`: {row['label']} ({row['packet_path']})"
@@ -106,6 +205,14 @@ def _key_value_list(values: dict[str, Any]) -> list[str]:
 
 def _section(title: str, body: str) -> str:
     return f"  <section>\n    <h2>{escape(title)}</h2>\n    {body}\n  </section>"
+
+
+def _optional_section(title: str, value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, list):
+        return _section(title, _html_list(value))
+    return _section(title, _html_list([value]))
 
 
 def _html_list(values: list[Any]) -> str:

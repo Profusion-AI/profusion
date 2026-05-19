@@ -1,0 +1,23 @@
+{
+  "artifact_id": "human_editorial_review",
+  "run_id": "run_001_live_minimum_aice",
+  "reviewed_at": "2026-05-18T22:35:20Z",
+  "reviewer": "Kyle",
+  "decision": "approved_for_internal_demo_only",
+  "reviewed_artifacts": [
+    "source_cards.json",
+    "quote_candidates.json",
+    "claim_map.json",
+    "attention_intelligence_map.json",
+    "rights_review.json",
+    "ambiguity_register.json",
+    "narrative_brief.json"
+  ],
+  "required_changes_before_publication": [
+    "Replace public-source placeholder with verified live sources.",
+    "Run a publication-specific rights review.",
+    "Remove or source any education-system-scale claims.",
+    "Avoid claims of production readiness, customer traction, or scientific validation."
+  ],
+  "approval_summary": "The brief may be used to demonstrate the receipt boundary and editorial control flow. It is not approved for external publication."
+}

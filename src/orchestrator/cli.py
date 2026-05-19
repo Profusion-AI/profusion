@@ -825,7 +825,7 @@ def m8_demo(
 
     console.print(f"Loaded workflow fixture: {workflow_slug}")
     console.print(
-        "Loaded run artifacts: routine_invoice, sensitive_billing_complaint"
+        "Loaded run artifacts: " + ", ".join(result["observation"]["case_ids"])
     )
     console.print("Validated artifact manifest")
     console.print("Generated M8 observation")

@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
-WORKFLOW_SLUG = "support-triage-human-review"
-WORKFLOW_NAME = "Customer Trust Triage Receipt"
-EVIDENCE_MODE = "fixture_backed_local_demo"
+from orchestrator.m8_gtm.registry import (
+    LOCAL_FIXTURE_EVIDENCE_MODE,
+    SUPPORT_TRIAGE_NAME,
+    SUPPORT_TRIAGE_SLUG,
+)
+
+WORKFLOW_SLUG = SUPPORT_TRIAGE_SLUG
+WORKFLOW_NAME = SUPPORT_TRIAGE_NAME
+EVIDENCE_MODE = LOCAL_FIXTURE_EVIDENCE_MODE
 
 LOCAL_FIXTURE_LIMITATION = (
     "The fixture simulates an n8n-style run with local artifacts; it does not "

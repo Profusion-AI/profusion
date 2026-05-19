@@ -1,0 +1,43 @@
+{
+  "artifact_id": "attention_intelligence_map",
+  "run_id": "run_001_live_minimum_aice",
+  "concept_label": "Attention Intelligence",
+  "working_definition": "A practical editorial frame for noticing where AI-assisted work shifts attention, review burden, evidence needs, and human judgment.",
+  "mapped_dimensions": [
+    {
+      "dimension": "source_awareness",
+      "description": "Can the reader see which sources shaped the narrative?",
+      "evidence_artifacts": [
+        "source_cards.json",
+        "claim_map.json"
+      ]
+    },
+    {
+      "dimension": "claim_discipline",
+      "description": "Are strong claims separated from supported internal framing?",
+      "evidence_artifacts": [
+        "claim_map.json",
+        "ambiguity_register.json"
+      ]
+    },
+    {
+      "dimension": "rights_awareness",
+      "description": "Are quotation and publication-rights boundaries visible before publication?",
+      "evidence_artifacts": [
+        "quote_candidates.json",
+        "rights_review.json"
+      ]
+    },
+    {
+      "dimension": "human_judgment",
+      "description": "Did a human editor approve the allowed use and limitations?",
+      "evidence_artifacts": [
+        "human_editorial_review.json"
+      ]
+    }
+  ],
+  "not_claimed": [
+    "Attention Intelligence is not represented here as a clinically validated trait.",
+    "This fixture does not claim curriculum adoption or learning-outcome evidence."
+  ]
+}

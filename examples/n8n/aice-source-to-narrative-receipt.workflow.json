@@ -1,0 +1,229 @@
+{
+  "id": "aiceSourceNarrativeP011",
+  "name": "AICE Source-to-Narrative Receipt - Profusion Local Demo",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "2e6a5d4c-0d5c-49d0-ae3f-7a3e7b3a0001",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -860,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "topic-slug",
+              "name": "topic_slug",
+              "type": "string",
+              "value": "aice-source-to-narrative-receipt"
+            },
+            {
+              "id": "topic-title",
+              "name": "topic_title",
+              "type": "string",
+              "value": "AI-assisted investigative content source-to-narrative receipt"
+            },
+            {
+              "id": "editorial-thesis",
+              "name": "editorial_thesis",
+              "type": "string",
+              "value": "Show how a source pack can become a narrative brief only after quote candidates, claim boundaries, rights concerns, and unresolved ambiguity are captured for human review."
+            },
+            {
+              "id": "evidence-mode",
+              "name": "evidence_mode",
+              "type": "string",
+              "value": "fixture_backed_live_n8n_demo"
+            },
+            {
+              "id": "publication-state",
+              "name": "default_publication_state",
+              "type": "string",
+              "value": "not_publishable_without_human_review"
+            },
+            {
+              "id": "no-downloads",
+              "name": "media_download_policy",
+              "type": "string",
+              "value": "metadata_only_no_media_downloads"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2e6a5d4c-0d5c-49d0-ae3f-7a3e7b3a0002",
+      "name": "Build Topic Brief",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -640,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst credentialsAvailable = Boolean(input.youtube_api_key || input.search_api_key || input.http_source_token);\nconst sourceCards = [\n  {\n    source_id: 'src_public_panel_metadata',\n    source_type: 'public_video_metadata',\n    title: 'Public AI governance panel excerpt candidate',\n    locator: 'https://example.invalid/public-ai-governance-panel',\n    retrieval_mode: credentialsAvailable ? 'live_metadata_adapter' : 'controlled_fallback_metadata',\n    downloaded_media: false,\n    transcript_available: false,\n    rights_status: 'unknown_requires_review',\n    limitation: 'Fallback payload used because HTTP/YouTube credentials were absent; no media was downloaded.'\n  },\n  {\n    source_id: 'src_founder_notes',\n    source_type: 'operator_note',\n    title: 'Founder notes on reviewable AI workflows',\n    locator: 'local_fixture_metadata_only',\n    retrieval_mode: 'controlled_fallback_metadata',\n    downloaded_media: false,\n    transcript_available: false,\n    rights_status: 'owned_or_internal_context_requires_editorial_review',\n    limitation: 'Local fallback note used to demonstrate source-card capture without external credentials.'\n  }\n];\nreturn [{ json: { ...input, credentials_available: credentialsAvailable, source_cards: sourceCards, limitations: [\n  'Controlled fallback payload used when HTTP/YouTube credentials are absent.',\n  'No third-party media was downloaded by this workflow.',\n  'Source metadata is not a factual, rights, or publication clearance certification.'\n] } }];"
+      },
+      "id": "2e6a5d4c-0d5c-49d0-ae3f-7a3e7b3a0003",
+      "name": "Source Metadata/Search Adapter Fallback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst quoteCandidates = input.source_cards.map((source, index) => ({\n  quote_id: `quote_candidate_${index + 1}`,\n  source_id: source.source_id,\n  candidate_text_summary: index === 0\n    ? 'Candidate quote about review, accountability, and evidence boundaries in AI-assisted work.'\n    : 'Candidate framing note about turning AI workflow outputs into reviewer-readable receipts.',\n  storage_mode: 'metadata_only',\n  audio_visual_downloaded: false,\n  review_status: index === 0 ? 'rights_review_required' : 'hold_for_permission_or_replacement'\n}));\nconst claims = [\n  {\n    claim_id: 'claim_review_boundary_needed',\n    claim_text: 'AI-assisted narrative work needs explicit review boundaries before publication decisions.',\n    evidence_refs: ['src_public_panel_metadata', 'src_founder_notes'],\n    support_level: 'directional_internal_demo_only'\n  },\n  {\n    claim_id: 'claim_receipt_packet_generated',\n    claim_text: 'A receipt packet can preserve source cards, quote candidates, claim maps, rights review, ambiguity, and human review state.',\n    evidence_refs: ['profusion_cli_receipt_packet'],\n    support_level: 'supported_after_local_cli_generation'\n  }\n];\nreturn [{ json: { ...input, quote_candidates: quoteCandidates, claim_map: claims } }];"
+      },
+      "id": "2e6a5d4c-0d5c-49d0-ae3f-7a3e7b3a0004",
+      "name": "Claim + Quote Candidate Extraction",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst rightsReview = input.quote_candidates.map((candidate) => ({\n  quote_id: candidate.quote_id,\n  rights_classification: candidate.review_status === 'rights_review_required' ? 'review_required_before_use' : 'do_not_use_without_permission_or_replacement',\n  publication_state: 'not_publishable_without_human_review',\n  no_claims: [\n    'does not certify copyright clearance',\n    'does not certify fair use',\n    'does not prove platform-policy compliance',\n    'does not mean the final content is safe to publish'\n  ]\n}));\nconst ambiguityRegister = [\n  {\n    ambiguity_id: 'amb_rights_and_context',\n    summary: 'Candidate source context and rights posture remain unresolved because fallback metadata was used.',\n    current_status: 'review_required',\n    next_review: 'Human editor must confirm source context, permission, replacement path, or removal.'\n  },\n  {\n    ambiguity_id: 'amb_claim_strength',\n    summary: 'Claims are demo-bounded and do not establish factual truth or journalistic neutrality.',\n    current_status: 'unresolved',\n    next_review: 'Human editor must inspect source cards and decide which claims survive.'\n  }\n];\nreturn [{ json: { ...input, rights_review: rightsReview, ambiguity_register: ambiguityRegister } }];"
+      },
+      "id": "2e6a5d4c-0d5c-49d0-ae3f-7a3e7b3a0005",
+      "name": "Rights/Ambiguity Classification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst { execSync } = require('child_process');\nconst command = 'cd /home/kyle/profusion && uv run profusion m8 demo aice-source-to-narrative-receipt --output-dir /tmp/profusion-aice-p0-1';\nlet stdout = '';\nlet stderr = '';\ntry {\n  stdout = execSync(command, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });\n} catch (error) {\n  stdout = error.stdout ? String(error.stdout) : '';\n  stderr = error.stderr ? String(error.stderr) : String(error.message || error);\n  throw new Error(`Profusion receipt command failed: ${stderr}`);\n}\nconst receiptMatch = String(stdout).match(/Receipt:\\s*(.+workflow_receipt\\.html)/);\nreturn [{ json: {\n  ...input,\n  profusion_command: command,\n  command_stdout: stdout,\n  command_stderr: stderr,\n  output_dir: '/tmp/profusion-aice-p0-1',\n  receipt_html: receiptMatch ? receiptMatch[1].trim() : null\n} }];"
+      },
+      "id": "2e6a5d4c-0d5c-49d0-ae3f-7a3e7b3a0006",
+      "name": "Generate Receipt Packet via Code Command",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "notes": "Runs the local Profusion CLI from a Code node because this n8n package does not expose n8n-nodes-base.executeCommand. Local execution requires NODE_FUNCTION_ALLOW_BUILTIN=child_process."
+    },
+    {
+      "parameters": {
+        "jsCode": "const commandResult = $input.first().json;\nconst stdout = commandResult.command_stdout || commandResult.stdout || commandResult.data || '';\nconst stderr = commandResult.command_stderr || commandResult.stderr || '';\nconst receiptMatch = String(stdout).match(/Receipt:\\s*(.+workflow_receipt\\.html)/);\nreturn [{ json: {\n  workflow_slug: 'aice-source-to-narrative-receipt',\n  workflow_name: 'AICE Source-to-Narrative Workflow Receipt',\n  node_count: 7,\n  execution_mode: 'live_n8n_or_controlled_live_fallback',\n  profusion_command: commandResult.profusion_command,\n  output_dir: '/tmp/profusion-aice-p0-1',\n  receipt_html: commandResult.receipt_html || (receiptMatch ? receiptMatch[1].trim() : null),\n  command_stdout: stdout,\n  command_stderr: stderr,\n  limitations: [\n    'Controlled fallback payload is used when HTTP/YouTube credentials are absent.',\n    'No media is downloaded by this n8n workflow.',\n    'The generated receipt does not certify factual truth, copyright clearance, fair use, platform compliance, journalistic neutrality, or publication safety.'\n  ]\n} }];"
+      },
+      "id": "2e6a5d4c-0d5c-49d0-ae3f-7a3e7b3a0007",
+      "name": "Return Receipt Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Topic Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Topic Brief": {
+      "main": [
+        [
+          {
+            "node": "Source Metadata/Search Adapter Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Source Metadata/Search Adapter Fallback": {
+      "main": [
+        [
+          {
+            "node": "Claim + Quote Candidate Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim + Quote Candidate Extraction": {
+      "main": [
+        [
+          {
+            "node": "Rights/Ambiguity Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rights/Ambiguity Classification": {
+      "main": [
+        [
+          {
+            "node": "Generate Receipt Packet via Code Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Receipt Packet via Code Command": {
+      "main": [
+        [
+          {
+            "node": "Return Receipt Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "aice-source-to-narrative-receipt-p0-1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "local-profusions-demo"
+  },
+  "tags": [
+    {
+      "name": "profusion"
+    },
+    {
+      "name": "m8"
+    },
+    {
+      "name": "aice"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "artifact_id": "n8n_run_summary",
+  "run_id": "run_001_live_minimum_aice",
+  "source_system": "n8n",
+  "execution_id": "manual-local-aice-20260519T021200Z",
+  "status": "completed_with_review_required",
+  "execution_mode": "live_n8n_or_controlled_live_fallback",
+  "run_timestamp": "2026-05-19T02:12:00Z",
+  "input_topic": "Attention Intelligence as an AI-era editorial skill",
+  "node_count": 7,
+  "nodes_executed": [
+    "Manual Trigger",
+    "Build Topic Brief",
+    "Source Metadata/Search Adapter Fallback",
+    "Claim + Quote Candidate Extraction",
+    "Rights/Ambiguity Classification",
+    "Generate Receipt Packet via Code Command",
+    "Return Receipt Summary"
+  ],
+  "generated_artifacts": [
+    "topic_brief.json",
+    "source_cards.json",
+    "quote_candidates.json",
+    "claim_map.json",
+    "attention_intelligence_map.json",
+    "rights_review.json",
+    "ambiguity_register.json",
+    "human_editorial_review.json",
+    "narrative_brief.json",
+    "visual_plan.json",
+    "execution_log.json"
+  ],
+  "receipt_packet_path": "/tmp/profusion-aice-p0-1/aice-source-to-narrative-receipt/<receipt_id>",
+  "output_receipt_path": "/tmp/profusion-aice-p0-1/aice-source-to-narrative-receipt/<receipt_id>/workflow_receipt.html",
+  "limitations": [
+    "Controlled fallback source metadata may be used when HTTP or YouTube credentials are absent.",
+    "No third-party audio/video was downloaded or packaged.",
+    "The run summary does not certify factual truth, copyright clearance, fair use, platform compliance, journalistic neutrality, or publication safety."
+  ]
+}
