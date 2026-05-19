@@ -274,6 +274,12 @@ def test_render_aice_validator_view_includes_scene_ready_validator_sections(
 
     html = render_aice_validator_view(model, local_url="http://127.0.0.1:8765/")
 
+    assert html.startswith("<!doctype html>")
+    assert '<html lang="en">' in html
+    assert "<head>" in html
+    assert "<body>" in html
+    assert "</body>" in html
+    assert "</html>" in html
     assert "AICE Workflow Receipt Validator" in html
     assert "HyperFrames Explorer for one completed Profusion receipt packet" in html
     assert "Validated with limitations" in html
@@ -345,3 +351,17 @@ def test_render_aice_validator_view_uses_packet_relative_links_only(tmp_path: Pa
     for artifact in model["artifacts"]:
         if artifact["href"]:
             assert artifact["href"] in html
+
+
+def test_render_aice_hyperframes_view_is_validator_alias(tmp_path: Path):
+    from orchestrator.hyperframes_receipts import load_aice_hyperframe_model
+    from orchestrator.hyperframes_receipts import render_aice_hyperframes_view
+    from orchestrator.hyperframes_receipts import render_aice_validator_view
+
+    packet_dir = make_runtime_packet(tmp_path)
+    model = load_aice_hyperframe_model(packet_dir)
+    local_url = "http://127.0.0.1:8765/"
+
+    assert render_aice_hyperframes_view(
+        model, local_url=local_url
+    ) == render_aice_validator_view(model, local_url=local_url)
