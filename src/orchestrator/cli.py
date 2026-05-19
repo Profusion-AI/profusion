@@ -835,6 +835,80 @@ def m8_demo(
     typer.echo(f"Receipt: {result['workflow_receipt_html']}")
 
 
+@m8_app.command("generate-from-payload")
+def m8_generate_from_payload(
+    workflow_slug: str = typer.Argument(..., help="M8-GTM workflow slug to run."),
+    input_path: Path = typer.Option(
+        ...,
+        "--input",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        help="Runtime n8n payload JSON.",
+    ),
+    output_dir: Path | None = typer.Option(
+        None,
+        "--output-dir",
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+        help="Receipt output root. Defaults to data/receipts/m8-gtm.",
+    ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Emit machine-readable JSON.",
+    ),
+) -> None:
+    """Generate an M8-GTM receipt packet from runtime n8n payload data."""
+
+    from orchestrator.m8_gtm.harness import generate_packet_from_runtime_payload
+    from orchestrator.m8_gtm.schemas import M8GTMError
+
+    try:
+        payload = json.loads(input_path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise M8GTMError("runtime payload JSON must be an object")
+        result = generate_packet_from_runtime_payload(
+            workflow_slug,
+            payload,
+            output_root=output_dir,
+        )
+    except (OSError, ValueError, M8GTMError) as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(code=1)
+
+    response = {
+        "workflow_slug": workflow_slug,
+        "receipt_id": result["receipt_id"],
+        "packet_dir": str(result["packet_dir"]),
+        "workflow_receipt_html": str(result["workflow_receipt_html"]),
+        "n8n_workspace_workflow_id": result["observation"]["n8n_execution"].get(
+            "workspace_workflow_id"
+        ),
+        "n8n_execution_id": result["observation"]["n8n_execution"]["execution_id"],
+        "node_count": result["observation"]["n8n_execution"]["node_count"],
+        "nodes_executed": result["observation"]["n8n_execution"]["nodes_executed"],
+    }
+    if json_output:
+        _emit_json(response)
+        return
+
+    _print_key_values(
+        "AICE Runtime Receipt Packet",
+        [
+            ("Workflow", response["workflow_slug"]),
+            ("Receipt", response["receipt_id"]),
+            ("Packet", response["packet_dir"]),
+            ("Receipt HTML", response["workflow_receipt_html"]),
+            ("n8n workflow", response["n8n_workspace_workflow_id"]),
+            ("n8n execution", response["n8n_execution_id"]),
+            ("Node count", response["node_count"]),
+        ],
+    )
+
+
 # ---------------------------------------------------------------------------
 # check-env
 # ---------------------------------------------------------------------------

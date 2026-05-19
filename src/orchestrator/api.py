@@ -135,6 +135,32 @@ def _register_routes(app: FastAPI) -> None:
             measurements_dir=config.MEASUREMENTS_DIR,
         )
 
+    @app.post("/api/m8/aice/receipt")
+    def post_aice_runtime_receipt(payload: dict[str, Any]) -> dict[str, Any]:
+        from orchestrator.m8_gtm.harness import generate_packet_from_runtime_payload
+        from orchestrator.m8_gtm.registry import AICE_SLUG
+        from orchestrator.m8_gtm.schemas import M8GTMError
+
+        try:
+            result = generate_packet_from_runtime_payload(AICE_SLUG, payload)
+        except M8GTMError as exc:
+            raise HTTPException(status_code=422, detail=str(exc))
+
+        n8n_execution = result["observation"]["n8n_execution"]
+        return {
+            "workflow_slug": AICE_SLUG,
+            "receipt_id": result["receipt_id"],
+            "packet_dir": str(result["packet_dir"]),
+            "workflow_receipt_html": str(result["workflow_receipt_html"]),
+            "n8n_workspace_workflow_id": n8n_execution.get("workspace_workflow_id"),
+            "n8n_execution_id": n8n_execution["execution_id"],
+            "node_count": n8n_execution["node_count"],
+            "nodes_executed": n8n_execution["nodes_executed"],
+            "limitations": result["receipt"]["limitations"],
+            "claims_supported": result["receipt"]["claims_supported"],
+            "claims_not_supported": result["receipt"]["claims_not_supported"],
+        }
+
     @app.get("/api/logs")
     def get_logs(
         item_id: str | None = None,

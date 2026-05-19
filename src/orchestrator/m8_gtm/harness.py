@@ -5,14 +5,24 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
 from orchestrator.m8_gtm.fixtures import load_workflow_fixture
-from orchestrator.m8_gtm.registry import AICE_SLUG, SUPPORT_TRIAGE_SLUG, WorkflowSpec
+from orchestrator.m8_gtm.registry import (
+    AICE_SLUG,
+    SUPPORT_TRIAGE_SLUG,
+    WorkflowSpec,
+    get_workflow_spec,
+)
 from orchestrator.m8_gtm.renderers import render_receipt_html, render_receipt_markdown
+from orchestrator.m8_gtm.runtime_payloads import (
+    WORKSPACE_RUNTIME_EVIDENCE_MODE,
+    validate_aice_runtime_payload,
+)
 from orchestrator.m8_gtm.schemas import (
     LOCAL_FIXTURE_LIMITATION,
     M8GTMError,
@@ -305,21 +315,40 @@ def _build_aice_observation(fixture: dict[str, Any], manifest: dict[str, Any]) -
         }
     ]
 
-    supported_claims = [
-        "The n8n workflow executed in the recorded P0.1.1 live-minimum path.",
-        f"At least three n8n nodes participated in the run; the recorded node count is {n8n_run['node_count']}.",
-        "A topic/thesis artifact was captured for the AICE workflow.",
-        "At least one source card was captured.",
-        "At least one claim candidate was mapped to a source card.",
-        "At least one quote or segment candidate was captured as metadata/reference only.",
-        "At least one Attention Intelligence dimension was mapped.",
-        "At least one rights, risk, or ambiguity item was recorded.",
-        "A human editorial review artifact exists for the narrative decision.",
-        "A receipt packet was generated with artifact hashes.",
-        "The receipt includes supported claims, unsupported claims, and limitations.",
-    ]
+    if spec.evidence_mode == WORKSPACE_RUNTIME_EVIDENCE_MODE:
+        supported_claims = [
+            (
+                "The n8n workspace workflow executed and returned a workspace "
+                "runtime payload used for Profusion receipt generation."
+            ),
+            f"At least three n8n workspace nodes participated in the run; the recorded node count is {n8n_run['node_count']}.",
+            "A topic/thesis artifact was captured from the workspace runtime payload.",
+            "At least one runtime source card was captured.",
+            "At least one runtime claim candidate was mapped to a source card.",
+            "At least one quote or segment candidate was captured as metadata/reference only.",
+            "At least one Attention Intelligence dimension was mapped.",
+            "At least one rights, risk, or ambiguity item was recorded.",
+            "A human editorial review artifact exists for the narrative decision.",
+            "A receipt packet was generated from runtime payload artifacts with hashes.",
+            "The receipt includes supported claims, unsupported claims, and limitations.",
+        ]
+        limitations = _aice_runtime_limitations(n8n_run.get("limitations", []))
+    else:
+        supported_claims = [
+            "The n8n workflow executed in the recorded P0.1.1 live-minimum path.",
+            f"At least three n8n nodes participated in the run; the recorded node count is {n8n_run['node_count']}.",
+            "A topic/thesis artifact was captured for the AICE workflow.",
+            "At least one source card was captured.",
+            "At least one claim candidate was mapped to a source card.",
+            "At least one quote or segment candidate was captured as metadata/reference only.",
+            "At least one Attention Intelligence dimension was mapped.",
+            "At least one rights, risk, or ambiguity item was recorded.",
+            "A human editorial review artifact exists for the narrative decision.",
+            "A receipt packet was generated with artifact hashes.",
+            "The receipt includes supported claims, unsupported claims, and limitations.",
+        ]
+        limitations = _aice_limitations()
     unsupported_claims = _aice_unsupported_claims()
-    limitations = _aice_limitations()
     _require_claim_lists(supported_claims, unsupported_claims, limitations)
 
     return {
@@ -346,7 +375,10 @@ def _build_aice_observation(fixture: dict[str, Any], manifest: dict[str, Any]) -
         "narrative_brief": narrative_brief,
         "visual_plan": visual_plan,
         "n8n_execution": {
+            "workspace_workflow_id": n8n_run.get("workspace_workflow_id"),
+            "workspace_url": n8n_run.get("workspace_url"),
             "execution_id": n8n_run["execution_id"],
+            "execution_url": n8n_run.get("execution_url"),
             "status": n8n_run["status"],
             "execution_mode": n8n_run["execution_mode"],
             "run_timestamp": n8n_run["run_timestamp"],
@@ -528,6 +560,289 @@ def generate_demo_packet(
     }
 
 
+def generate_packet_from_runtime_payload(
+    workflow_slug: str,
+    payload: dict[str, Any],
+    output_root: Path | None = None,
+) -> dict[str, Any]:
+    """Generate a complete AICE packet from n8n runtime payload data."""
+
+    if workflow_slug != AICE_SLUG:
+        raise M8GTMError("runtime payload generation is currently supported only for AICE")
+    if output_root is None:
+        from orchestrator import config
+
+        output_root = config.RECEIPTS_DIR / "m8-gtm"
+
+    normalized = validate_aice_runtime_payload(payload)
+    receipt_id = f"receipt-{_now_iso().replace(':', '').replace('-', '')}-{uuid4().hex[:8]}"
+    slug_root = output_root / workflow_slug
+    final_dir = slug_root / receipt_id
+    partial_dir = slug_root / f"{receipt_id}.partial"
+    if partial_dir.exists() or final_dir.exists():
+        raise M8GTMError(f"Receipt packet already exists: {final_dir}")
+
+    fixture = _aice_runtime_payload_to_fixture(normalized, final_dir)
+    try:
+        manifest = _build_runtime_artifact_manifest(fixture, normalized, partial_dir)
+        manifest["packet_dir"] = str(final_dir)
+        _write_json(partial_dir / "artifact_manifest.json", manifest)
+
+        observation = build_m8_observation(fixture, manifest)
+        receipt = build_workflow_receipt(observation, manifest)
+        receipt["receipt_id"] = receipt_id
+
+        _write_json(partial_dir / "m8_observation.json", observation)
+        _write_json(partial_dir / "workflow_receipt.json", receipt)
+        (partial_dir / "workflow_receipt.md").write_text(
+            render_receipt_markdown(receipt),
+            encoding="utf-8",
+        )
+        (partial_dir / "workflow_receipt.html").write_text(
+            render_receipt_html(receipt),
+            encoding="utf-8",
+        )
+        _assert_required_packet_files(partial_dir)
+        partial_dir.rename(final_dir)
+    except Exception:
+        if partial_dir.exists():
+            shutil.rmtree(partial_dir)
+        raise
+
+    return {
+        "receipt_id": receipt_id,
+        "packet_dir": final_dir,
+        "artifact_manifest": final_dir / "artifact_manifest.json",
+        "m8_observation": final_dir / "m8_observation.json",
+        "workflow_receipt_json": final_dir / "workflow_receipt.json",
+        "workflow_receipt_md": final_dir / "workflow_receipt.md",
+        "workflow_receipt_html": final_dir / "workflow_receipt.html",
+        "manifest": manifest,
+        "observation": observation,
+        "receipt": receipt,
+    }
+
+
+def _aice_runtime_payload_to_fixture(
+    payload: dict[str, Any],
+    final_dir: Path,
+) -> dict[str, Any]:
+    spec = replace(
+        get_workflow_spec(AICE_SLUG),
+        evidence_mode=WORKSPACE_RUNTIME_EVIDENCE_MODE,
+    )
+    topic = payload["topic_brief"]
+    run_id = f"{AICE_SLUG}-workspace-runtime-{payload['n8n_execution_id']}"
+    artifacts = {
+        "topic_brief": topic,
+        "source_cards": payload["source_cards"],
+        "quote_candidates": payload["quote_candidates"],
+        "claim_map": payload["claim_map"],
+        "attention_intelligence_map": payload["attention_intelligence_map"],
+        "rights_review": payload["rights_review"],
+        "ambiguity_register": payload["ambiguity_register"],
+        "human_editorial_review": payload["human_editorial_review"],
+        "narrative_brief": payload["narrative_brief"],
+        "visual_plan": payload["visual_plan"],
+        "execution_log": _runtime_execution_log(payload),
+        "n8n_run_summary": _runtime_n8n_summary(payload, final_dir),
+    }
+    run = {
+        "run_id": run_id,
+        "case_id": "workspace_runtime_aice",
+        "case_dir": "runtime_payload",
+        "run": {
+            "run_id": run_id,
+            "case_id": "workspace_runtime_aice",
+            "workflow_slug": AICE_SLUG,
+            "evidence_mode": WORKSPACE_RUNTIME_EVIDENCE_MODE,
+            "outcome": {
+                "status": "receipt_generated_from_runtime_payload",
+                "publication_state": payload["narrative_brief"]["allowed_use"],
+            },
+            "ai_actions": [
+                {
+                    "action": "n8n built runtime source cards",
+                    "input_artifact": "topic_brief.json",
+                    "output_artifact": "source_cards.json",
+                    "risk_signal": "source_context_required",
+                },
+                {
+                    "action": "n8n mapped runtime claims and quote candidates",
+                    "input_artifact": "source_cards.json",
+                    "output_artifact": "claim_map.json",
+                    "risk_signal": "unsupported_claims_must_remain_visible",
+                },
+                {
+                    "action": "n8n prepared runtime narrative brief",
+                    "input_artifact": "claim_map.json",
+                    "output_artifact": "narrative_brief.json",
+                    "risk_signal": "human_editorial_review_required",
+                },
+            ],
+            "failure_or_retry_state": {
+                "status": "none",
+                "details": "No failure or retry occurred in the runtime payload proof.",
+            },
+        },
+        "artifacts": artifacts,
+        "artifact_files": [],
+    }
+    return {
+        "workflow_slug": AICE_SLUG,
+        "workflow_spec": spec,
+        "workflow": {
+            "workflow_slug": AICE_SLUG,
+            "workflow_name": spec.name,
+            "trust_domain": "ai_assisted_investigative_content",
+            "source_system": "n8n",
+            "evidence_mode": WORKSPACE_RUNTIME_EVIDENCE_MODE,
+            "workflow_boundary": (
+                "Profusion documents an n8n workspace runtime AICE workflow: "
+                "topic brief, metadata-only source cards, quote candidates, "
+                "claim mapping, rights review, ambiguity register, human "
+                "editorial review, and receipt generation from the payload "
+                "that moved through the workspace execution."
+            ),
+            "trigger_summary": (
+                f"n8n workspace workflow {payload['n8n_workspace_workflow_id']} "
+                f"execution {payload['n8n_execution_id']} passed runtime AICE "
+                "data into Profusion receipt generation."
+            ),
+        },
+        "fixture_dir": "runtime_payload",
+        "workflow_path": "runtime_payload",
+        "runs": [run],
+    }
+
+
+def _runtime_execution_log(payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "run_timestamp": payload["executed_at"],
+        "workflow_slug": AICE_SLUG,
+        "execution_mode": WORKSPACE_RUNTIME_EVIDENCE_MODE,
+        "workspace_workflow_id": payload["n8n_workspace_workflow_id"],
+        "execution_id": payload["n8n_execution_id"],
+        "nodes_executed": payload["nodes_executed"],
+        "limitations": payload["limitations"],
+    }
+
+
+def _runtime_n8n_summary(payload: dict[str, Any], final_dir: Path) -> dict[str, Any]:
+    return {
+        "workflow_slug": AICE_SLUG,
+        "workspace_workflow_id": payload["n8n_workspace_workflow_id"],
+        "workspace_url": payload.get("n8n_workspace_url"),
+        "execution_id": payload["n8n_execution_id"],
+        "execution_url": payload.get("n8n_execution_url"),
+        "status": payload.get("status", "success"),
+        "execution_mode": WORKSPACE_RUNTIME_EVIDENCE_MODE,
+        "run_timestamp": payload["executed_at"],
+        "input_topic": payload["topic_brief"].get("title"),
+        "node_count": payload["node_count"],
+        "nodes_executed": payload["nodes_executed"],
+        "generated_artifacts": [
+            "topic_brief.json",
+            "source_cards.json",
+            "quote_candidates.json",
+            "claim_map.json",
+            "rights_review.json",
+            "ambiguity_register.json",
+            "human_editorial_review.json",
+            "narrative_brief.json",
+            "visual_plan.json",
+            "workflow_receipt.html",
+        ],
+        "receipt_packet_path": str(final_dir),
+        "output_receipt_path": str(final_dir / "workflow_receipt.html"),
+        "limitations": payload["limitations"],
+    }
+
+
+def _build_runtime_artifact_manifest(
+    fixture: dict[str, Any],
+    payload: dict[str, Any],
+    packet_dir: Path,
+) -> dict[str, Any]:
+    spec: WorkflowSpec = fixture["workflow_spec"]
+    packet_dir.mkdir(parents=True, exist_ok=True)
+    artifacts_dir = packet_dir / "artifacts"
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    generated_at = _now_iso()
+    run = fixture["runs"][0]
+    artifact_rows = [
+        _write_runtime_artifact(
+            artifact_id="runtime.runtime_payload",
+            case_id="workspace_runtime_aice",
+            artifact_type="runtime_payload",
+            payload=payload,
+            dest_path=artifacts_dir / "runtime_payload.json",
+            packet_dir=packet_dir,
+            description="Original validated n8n runtime payload.",
+        )
+    ]
+    artifact_specs_by_key = {
+        artifact_spec.artifact_key: artifact_spec for artifact_spec in spec.artifact_specs
+    }
+    for artifact_key, artifact_payload in run["artifacts"].items():
+        artifact_spec = artifact_specs_by_key.get(artifact_key)
+        filename = artifact_spec.filename if artifact_spec else f"{artifact_key}.json"
+        artifact_rows.append(
+            _write_runtime_artifact(
+                artifact_id=_artifact_id("workspace_runtime_aice", artifact_key),
+                case_id="workspace_runtime_aice",
+                artifact_type=(
+                    artifact_spec.artifact_type if artifact_spec else artifact_key
+                ),
+                payload=artifact_payload,
+                dest_path=artifacts_dir / filename,
+                packet_dir=packet_dir,
+                description=_artifact_description(
+                    "workspace_runtime_aice",
+                    artifact_key,
+                    spec,
+                ),
+            )
+        )
+
+    manifest = {
+        "manifest_id": f"manifest-{generated_at.replace(':', '').replace('-', '')}-{uuid4().hex[:8]}",
+        "workflow_slug": AICE_SLUG,
+        "evidence_mode": WORKSPACE_RUNTIME_EVIDENCE_MODE,
+        "generated_at": generated_at,
+        "source_fixture_path": None,
+        "source_runtime_payload": "artifacts/runtime_payload.json",
+        "packet_dir": str(packet_dir),
+        "artifacts": artifact_rows,
+        "limitations": _aice_runtime_limitations(payload.get("limitations", [])),
+    }
+    _write_json(packet_dir / "artifact_manifest.json", manifest)
+    return manifest
+
+
+def _write_runtime_artifact(
+    *,
+    artifact_id: str,
+    case_id: str,
+    artifact_type: str,
+    payload: dict[str, Any],
+    dest_path: Path,
+    packet_dir: Path,
+    description: str,
+) -> dict[str, Any]:
+    _write_json(dest_path, payload)
+    return {
+        "artifact_id": artifact_id,
+        "case_id": case_id,
+        "artifact_type": artifact_type,
+        "source_path": "runtime_payload",
+        "packet_path": str(dest_path.relative_to(packet_dir)),
+        "sha256": _sha256(dest_path),
+        "description": description,
+        "redaction_state": "none",
+    }
+
+
 def _stamp_aice_n8n_receipt_paths(fixture: dict[str, Any], final_dir: Path) -> None:
     """Record the generated packet path in the in-memory AICE n8n summary."""
 
@@ -643,6 +958,19 @@ def _aice_limitations() -> list[str]:
         "The packet records source cards, claim mappings, rights/risk classification, ambiguity states, human editorial review, and generated receipt artifacts.",
         "The receipt is not a publication, legal, compliance, rights-clearance, journalistic-neutrality, or platform-policy approval mechanism.",
     ]
+
+
+def _aice_runtime_limitations(payload_limitations: list[str]) -> list[str]:
+    limitations = [
+        "Workspace proof uses controlled runtime metadata generated inside n8n.",
+        "Media candidates remain metadata/reference-only; no third-party audio/video is downloaded, packaged, edited, republished, or monetized.",
+        "The packet records source cards, claim mappings, rights/risk classification, ambiguity states, human editorial review, and generated receipt artifacts from the runtime payload.",
+        "The receipt is not a publication, legal, compliance, rights-clearance, journalistic-neutrality, or platform-policy approval mechanism.",
+    ]
+    for item in payload_limitations:
+        if item not in limitations:
+            limitations.append(item)
+    return limitations
 
 
 def _manifest_limitations(spec: WorkflowSpec) -> list[str]:
