@@ -26,6 +26,8 @@ measure_app = typer.Typer(help="Record and inspect manual M8 workflow outcome ob
 app.add_typer(measure_app, name="measure")
 m8_app = typer.Typer(help="Run M8-GTM fixture-backed workflow receipt demos.")
 app.add_typer(m8_app, name="m8")
+hyperframes_app = typer.Typer(help="Local HyperFrames receipt validator tools.")
+app.add_typer(hyperframes_app, name="hyperframes")
 console = Console()
 
 
@@ -907,6 +909,121 @@ def m8_generate_from_payload(
             ("Node count", response["node_count"]),
         ],
     )
+
+
+# ---------------------------------------------------------------------------
+# HyperFrames local receipt validator
+# ---------------------------------------------------------------------------
+
+def _run_hyperframes_validator(
+    receipt_dir: Path,
+    host: str,
+    port: int,
+    dry_run: bool,
+) -> None:
+    if host != "127.0.0.1":
+        typer.echo("PR5 validator only binds to 127.0.0.1")
+        raise typer.Exit(code=2)
+
+    from orchestrator.hyperframes_receipts import load_aice_hyperframe_model
+
+    resolved_receipt_dir = receipt_dir.expanduser().resolve()
+    local_url = f"http://{host}:{port}/"
+    try:
+        model = load_aice_hyperframe_model(resolved_receipt_dir)
+    except ValueError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(code=1)
+
+    workflow = model["workflow"]
+    validation = model["validation"]
+    typer.echo("AICE Workflow Receipt Validator")
+    typer.echo(f"Receipt packet: {resolved_receipt_dir}")
+    typer.echo(f"Validation status: {validation['validation_status']}")
+    typer.echo(f"Workflow: {workflow['name']}")
+    typer.echo(f"Execution ID: {workflow['n8n_execution_id']}")
+    typer.echo(f"Node count: {workflow['node_count']}")
+    typer.echo(f"Local URL: {local_url}")
+    typer.echo(f"Open this first: {local_url}")
+    typer.echo("Boundary: Local validator only; receipt remains source of truth.")
+
+    if dry_run:
+        return
+
+    import uvicorn
+    from orchestrator.hyperframes_server import create_aice_hyperframes_app
+
+    server_app = create_aice_hyperframes_app(
+        resolved_receipt_dir,
+        local_url=local_url,
+    )
+    uvicorn.run(server_app, host=host, port=port, log_level="info")
+
+
+@hyperframes_app.command("validate")
+def hyperframes_validate(
+    receipt_dir: Path = typer.Option(
+        ...,
+        "--receipt-dir",
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        readable=True,
+        help="Receipt packet directory.",
+    ),
+    host: str = typer.Option(
+        "127.0.0.1",
+        "--host",
+        help="Loopback bind host.",
+    ),
+    port: int = typer.Option(
+        8765,
+        "--port",
+        min=1024,
+        max=65535,
+        help="Loopback bind port.",
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Validate and print server details without starting uvicorn.",
+    ),
+) -> None:
+    """Validate and serve a local AICE receipt packet view."""
+    _run_hyperframes_validator(receipt_dir, host, port, dry_run)
+
+
+@hyperframes_app.command("serve")
+def hyperframes_serve(
+    receipt_dir: Path = typer.Option(
+        ...,
+        "--receipt-dir",
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        readable=True,
+        help="Receipt packet directory.",
+    ),
+    host: str = typer.Option(
+        "127.0.0.1",
+        "--host",
+        help="Loopback bind host.",
+    ),
+    port: int = typer.Option(
+        8765,
+        "--port",
+        min=1024,
+        max=65535,
+        help="Loopback bind port.",
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Validate and print server details without starting uvicorn.",
+    ),
+) -> None:
+    """Compatibility alias for the local AICE receipt validator."""
+    _run_hyperframes_validator(receipt_dir, host, port, dry_run)
 
 
 # ---------------------------------------------------------------------------
