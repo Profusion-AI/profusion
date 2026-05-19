@@ -281,6 +281,7 @@ def test_render_aice_validator_view_includes_scene_ready_validator_sections(
     assert html.startswith("<!doctype html>")
     assert '<html lang="en">' in html
     assert "<head>" in html
+    assert '<link rel="icon" href="data:,">' in html
     assert "<body>" in html
     assert "</body>" in html
     assert "</html>" in html
@@ -311,6 +312,7 @@ def test_render_aice_validator_view_includes_scene_ready_validator_sections(
     assert "Founder Proof Summary" in html
     assert "Copy Founder Proof Summary" in html
     assert "copyFounderProofSummary" in html
+    assert ".catch(() =>" in html
     assert 'data-prof-demo="aice-validator"' in html
     assert 'data-scene="validation-header"' in html
     assert 'data-scene="workflow-replay"' in html
