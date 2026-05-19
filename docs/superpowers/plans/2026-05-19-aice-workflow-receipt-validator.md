@@ -30,6 +30,28 @@ stash@{0}: On codex/aice-demo-readiness-api-hardening: park AICE demo-readiness 
 /tmp/profusion-aice-workspace-proof-post-merge/aice-source-to-narrative-receipt/receipt-20260519T150640Z-35fbc20a/
 ```
 
+## Orchestrator Review Adjustments
+
+These adjustments are binding for implementation and supersede any older code
+snippets in this plan that imply a narrower model.
+
+- Build the workflow replay from `m8_observation.json`
+  `n8n_execution.nodes_executed`, then append only the derived terminal node
+  `Profusion Receipt Packet`.
+- Build the artifact ledger from every `artifact_manifest.json` artifact row,
+  then add required receipt display/core files that are not already present.
+  Keep the proof counter `receipt_artifacts_found` focused on the six required
+  packet files.
+- Emit deterministic dry-run text lines for the validator CLI, or test only
+  stable substrings. Do not depend on Rich table formatting for acceptance.
+- Reject non-loopback bind hosts in PR5. The default and supported bind host is
+  `127.0.0.1`; public exposure, LAN exposure, and tunnels are out of scope.
+- Treat manifest hash mismatch and unsafe artifact paths as validation failures.
+- Scan founder-facing positive/proof text for forbidden overclaim language while
+  excluding unsupported-claims and limitations/no-claims sections.
+- Do not add MP4 rendering, public deployment, compliance claims, legal claims,
+  source-credential claims, or production-readiness claims in this PR5 slice.
+
 ## File Structure
 
 - Create `tests/test_hyperframes_receipt_parser.py`: validator model, rendering, server, safe-artifact, and CLI dry-run tests.

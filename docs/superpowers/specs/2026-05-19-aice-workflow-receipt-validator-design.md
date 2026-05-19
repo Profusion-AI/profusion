@@ -1,7 +1,7 @@
 # AICE Workflow Receipt Validator Design
 
 Date: 2026-05-19
-Status: Ready for Kyle review before implementation
+Status: Orchestrator-reviewed for PR5 implementation
 
 ## Purpose
 
@@ -18,6 +18,11 @@ workflow execution metadata is present, the node trail is represented, artifacts
 are preserved, human review is visible, supported claims exist, unsupported
 claims exist, limitations exist, paths are safe, and founder-facing language
 does not overclaim.
+
+Implementation note from the PR5 orchestrator review: the workflow replay must
+be built from the recorded `n8n_execution.nodes_executed` trail, not from a
+hand-coded storyboard. The terminal `Profusion Receipt Packet` frame is the only
+derived node.
 
 The **HyperFrames Explorer** remains the interactive view inside the validator.
 The receipt packet remains the source of truth. The validator is not a new
@@ -51,6 +56,9 @@ uv run profusion hyperframes serve --receipt-dir <receipt_dir>
 Both commands bind to `127.0.0.1`, parse the receipt packet, validate the packet
 boundary, start the local validator, print the local URL, and print the first
 thing Kyle should open. A `--dry-run` mode exists for tests and preflight checks.
+
+PR5 must reject non-loopback bind hosts. Public exposure, LAN exposure, tunnels,
+and production deployment remain outside this slice.
 
 The implementation deliberately avoids a browser directory picker in the first
 slice. A path-backed loader is smaller, testable, and better aligned with the
@@ -226,6 +234,9 @@ The primary validation surface contains:
 - Founder-safe claim panel.
 - Validation findings panel with PASS, WARN, and FAIL tiers.
 - Copy Founder Proof Summary button.
+
+The artifact ledger must include every manifest-listed artifact and any required
+receipt display/core files that are not already listed in the manifest.
 
 The lineage note must be explicit:
 
